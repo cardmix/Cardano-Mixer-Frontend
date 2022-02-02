@@ -1,0 +1,79 @@
+cabal-version:      3.0
+name:               cardano-mixer-frontend
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+license: Apache-2.0
+license-files:      LICENSE
+maintainer:         devteam@cardmix.io
+
+-- A copyright notice.
+-- copyright:
+-- category:
+-- extra-source-files: CHANGELOG.md
+
+common lang
+    default-language:   Haskell2010
+    ghc-options:
+      -Wall
+      -Wnoncanonical-monad-instances
+      -Wincomplete-uni-patterns
+      -Wincomplete-record-updates
+      -Wredundant-constraints
+      -fwarn-redundant-constraints
+      -Widentities -rtsopts
+      -- See Plutus Tx readme
+      -fno-specialise -fno-strictness -fobject-code -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+    -- if flag(defer-plugin-errors)
+    --   ghc-options:
+        -fplugin-opt PlutusTx.Plugin:defer-errors
+
+library
+    import: lang
+    exposed-modules:
+    build-depends:
+    hs-source-dirs: src
+    
+executable cardano-mixer-client
+  import: lang
+  main-is: mixer-client.hs
+  hs-source-dirs: app
+  ghc-options:
+    -threaded
+  build-depends:
+    base                          >= 4.9 && < 5,
+    aeson                                  -any,
+    bytestring                             -any,
+    containers                             -any,
+    data-default                           -any,
+    deepseq                                -any,
+    directory                              -any,
+    extra                                  -any,
+    ghc-prim                               -any,
+    hashable                               -any,
+    memory                                 -any,
+    openapi3                               -any,
+    random                                 -any,
+    req                                    -any,
+    serialise                        == 0.2.3.0,
+    text                                   -any,
+    generic-arbitrary                      -any,
+    prettyprinter                          -any,
+    QuickCheck                             -any,
+    uuid                                   -any,
+    cborg                            == 0.2.5.0,
+    cardano-mixer-common                   -any,
+    cardano-mixer-frontend                 -any,
+    
+
+
+
+
