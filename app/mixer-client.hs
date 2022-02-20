@@ -32,27 +32,29 @@ pabIP :: Text
 pabIP = "127.0.0.1"
 
 mixVal :: Value
-mixVal = Value $ singleton (CurrencySymbol "") (singleton (TokenName "") 400_000)
+mixVal = Value $ singleton (CurrencySymbol "") (singleton (TokenName "") 40_000)
 
 
 main :: IO ()
 main = do
     args <- getArgs
     case args of
-        ["deposit"]       -> depositProcedure
+        ["deposit",  str] -> depositProcedure str
         ["withdraw", str] -> withdrawProcedure str
         _                 -> print ("Unknown command" :: String)
 
 --------------------------------- Use mixer logic --------------------------------
 
-depositProcedure :: IO ()
-depositProcedure = do
+depositProcedure :: String -> IO ()
+depositProcedure str = do
+    (pkh, _, _) <- mixerConnectProcedure str
+
     ds   <- generateDepositSecret
     sas  <- generateShieldedAccountSecret
     logSecrets ds sas
     let leaf = mimcHash (getR1 ds) (getR2 ds)
     cidMixerUse <- activateRequest pabIP MixerUse (Nothing :: Maybe Wallet)
-    endpointRequest pabIP "deposit" cidMixerUse (DepositParams mixVal leaf)
+    endpointRequest pabIP "deposit" cidMixerUse (DepositParams pkh mixVal leaf)
     s <- awaitStatusUpdate pabIP cidMixerUse :: IO String
     print s
 
