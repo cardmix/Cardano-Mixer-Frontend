@@ -30,8 +30,6 @@ common lang
       -Wredundant-constraints
       -fwarn-redundant-constraints
       -Widentities
-      -- See Plutus Tx readme
-      -fno-specialise -fno-strictness -fobject-code -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
 
 library
     import: lang
@@ -41,7 +39,7 @@ library
     
 executable cardano-mixer-client
   import: lang
-  main-is: mixer-client.hs
+  main-is: client-app.hs
   hs-source-dirs: app
   ghc-options:
     -threaded
