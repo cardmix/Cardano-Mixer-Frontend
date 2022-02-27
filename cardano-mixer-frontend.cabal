@@ -29,12 +29,9 @@ common lang
       -Wincomplete-record-updates
       -Wredundant-constraints
       -fwarn-redundant-constraints
-      -Widentities -rtsopts
+      -Widentities
       -- See Plutus Tx readme
       -fno-specialise -fno-strictness -fobject-code -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
-    -- if flag(defer-plugin-errors)
-    --   ghc-options:
-        -fplugin-opt PlutusTx.Plugin:defer-errors
 
 library
     import: lang
@@ -53,25 +50,14 @@ executable cardano-mixer-client
     aeson                                  -any,
     bytestring                             -any,
     containers                             -any,
-    data-default                           -any,
-    deepseq                                -any,
-    directory                              -any,
-    extra                                  -any,
-    ghc-prim                               -any,
-    hashable                               -any,
-    memory                                 -any,
-    openapi3                               -any,
-    random                                 -any,
-    req                                    -any,
-    serialise                        == 0.2.3.0,
-    text                                   -any,
-    generic-arbitrary                      -any,
-    prettyprinter                          -any,
-    QuickCheck                             -any,
-    uuid                                   -any,
-    cborg                            == 0.2.5.0,
-    cardano-mixer-common                   -any,
     cardano-mixer-frontend                 -any,
+    data-default                           -any,
+    ghc-prim                               -any,
+    random                                 -any,
+    reflex-dom                             -any,
+    text                                   -any,
+    prettyprinter                          -any,
+    
     
 
 
