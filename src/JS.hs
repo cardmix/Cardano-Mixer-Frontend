@@ -50,3 +50,19 @@ foreign import javascript unsafe
 
 copyElemContent :: MonadIO m => Text -> m ()
 copyElemContent = liftIO . copyElemContent_js
+
+foreign import javascript unsafe
+  "(function() {\
+    var element = document.createElement('a');\
+      element.setAttribute('href', 'data:application/octet-stream,' +\
+        encodeURIComponent($1));\
+      element.setAttribute('download', 'key.txt');\
+      element.style.display = 'none';\
+      document.body.appendChild(element);\
+      element.click();\
+      document.body.removeChild(element);\
+  })();"
+  saveTextFile_js :: Text -> IO ()
+
+saveTextFile :: MonadIO m => Text -> m ()
+saveTextFile = liftIO . saveTextFile_js

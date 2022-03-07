@@ -1,14 +1,17 @@
 module App where
 
 import Control.Monad
+import Control.Monad.IO.Class
 import Data.Bool
 import Data.Functor ((<&>))
 import Data.List as L
 import Data.Text as T
 import Data.Witherable (catMaybes)
 import JS
+import NamiJS as Nami
 import Prelude as P
 import Reflex.Dom
+import System.Random
 import Text.Read (readMaybe)
 
 appWidget :: MonadWidget t m => m ()
@@ -39,15 +42,20 @@ mainForm :: MonadWidget t m => m ()
 mainForm = divClass columnClass . divClass "divblockcentered" .
   divClass "columns-4 w-row" $ mdo
     dFormState <- holdDyn Deposit $ leftmost [eDeposit, eWithdraw]
-    dWalletConnected <- holdDyn False never
+    isEnabled <- Nami.isEnabled
+    dWalletConnected <- holdDyn isEnabled (True <$ eConnect) -- make this an input to pass values
     eDeposit <- buttonSwitch Deposit dFormState
-    divClass "w-col w-col-8 w-col-medium-8 w-col-small-8 w-col-tiny-8" .
-      divClass "appformwrapper" . divClass "form-block w-form" .
-        el "form" . dyn_ $ dFormState <&> \case
+    eConnect <- divClass colCls8 . divClass "appformwrapper" .
+      divClass "form-block w-form" $ do
+        eeConnect <- el "form" . dyn $ dFormState <&> \case
           Deposit -> depositForm dWalletConnected
-          Withdraw -> withdrawForm
+          Withdraw -> withdrawForm >> return never
+        switchHold never eeConnect
+    performEvent_ (Nami.enable <$ eConnect)
     eWithdraw <- buttonSwitch Withdraw dFormState
     blank
+  where
+    colCls8 = "w-col w-col-8 w-col-medium-8 w-col-small-8 w-col-tiny-8"
 
 data Token = TokenADA | TokenTest deriving (Eq, Show, Ord, Bounded, Enum)
 
@@ -56,8 +64,10 @@ tokenToAmountRange = \case
   TokenADA -> [20, 100, 200, 300]
   TokenTest -> [10, 20, 30]
 
-depositForm :: MonadWidget t m => Dynamic t Bool -> m ()
-depositForm dWalletConnected = do
+data ButtonState = ButtonConnect | ButtonDeposit deriving Eq
+
+depositForm :: MonadWidget t m => Dynamic t Bool -> m (Event t ())
+depositForm dWalletConnected = mdo
   eToken <- selectInput "Token" tokenHint showToken TokenADA [minBound..]
   dToken <- holdDyn initToken eToken
   eAmount <- switchHold never =<< dyn (dToken <&> \tok -> do
@@ -68,7 +78,21 @@ depositForm dWalletConnected = do
   dAmount <- holdDyn (tokenInitAmount initToken) $ leftmost
     [eAmount, tokenInitAmount <$> eToken]
   inputTitle "Secret Key" keyHint
-  secretKeyInput
+  secretKeyInput (() <$ eDeposit)
+  eeBtn <- divClass "mainbuttonwrapper" $ dyn $ dWalletConnected <&> \case
+    False -> do
+      (e, _) <- elAttr' "a" ("class" =: "button w-button") $
+        text "Connect to wallet"
+      return (ButtonConnect <$ domEvent Click e)
+    True -> do
+      (e, _) <- elAttr' "a" ("class" =: "button w-button") $
+        text "Deposit"
+      return (ButtonDeposit <$ domEvent Click e)
+  eBtn <- switchHold never eeBtn
+  let
+    eConnect = ffilter (== ButtonConnect) eBtn
+    eDeposit = ffilter (== ButtonDeposit) eBtn
+  return (() <$ eConnect)
   where
     initToken = TokenADA
     tokenInitAmount tok = let range = tokenToAmountRange tok in
@@ -81,21 +105,24 @@ depositForm dWalletConnected = do
     amountHint = "It's an amount"
     keyHint = "It's a secret key"
 
-secretKeyInput :: MonadWidget t m => m ()
-secretKeyInput = divClass "secretekeywrapper" . divClass "w-row" $ do
+secretKeyInput :: MonadWidget t m => Event t () -> m ()
+secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
+  key :: Integer <- liftIO $ randomRIO (0, p^3)
+  performEvent_ (JS.saveTextFile (toText key) <$ eDeposit)
   let keyId = "TextSecreteKey"
   divClass colCls11 $ do
     let
       keyEnabledAttrs = "class" =: "textform" <> "id" =: keyId
-      -- keyDisabledAttrs = "class" =: "textform unable"
-      keyInpAttrs = pure keyEnabledAttrs -- TODO
-    elDynAttr "div" keyInpAttrs $ text "Please, save the secret key!"
+      keyDisabledAttrs = "class" =: "textform unable"
+    keyInpAttrs <- holdDyn keyDisabledAttrs (keyEnabledAttrs <$ eDeposit)
+    keyInpText <- holdDyn "Please, save the secret key!" (toText key <$ eDeposit)
+    elDynAttr "div" keyInpAttrs $ dynText keyInpText
   divClass colCls4 $ do
     let
       copyEnabledAttrs = "class" =: "buttoncopy w-inline-block"
         <> "style" =: "cursor:pointer;"
-      -- copyDisabledAttrs = "class" =: "buttoncopy unable w-inline-block"
-      copyBtnAttrs = pure copyEnabledAttrs -- TODO
+      copyDisabledAttrs = "class" =: "buttoncopy unable w-inline-block"
+    copyBtnAttrs <- holdDyn copyDisabledAttrs (copyEnabledAttrs <$ eDeposit)
     (e, _) <- elDynAttr' "a" copyBtnAttrs $ elAttr "img"
       ("src" =: "/images/PictCopy.svg" <> "loading" =: "lazy" <>
         "width" =: "23" <> "class" =: "pictcopy") blank
@@ -103,6 +130,7 @@ secretKeyInput = divClass "secretekeywrapper" . divClass "w-row" $ do
   where
     colCls11 = "w-col w-col-11 w-col-small-11 w-col-tiny-11"
     colCls4 = "column-4 w-col w-col-1 w-col-small-1 w-col-tiny-1"
+    p = 52435875175126190479447740508185965837690552500527637822603658699938581184513
 
 selectInput :: (MonadWidget t m, Eq a) => Text -> Text -> (a -> Text) -> a
   -> [a] -> m (Event t a)
@@ -188,4 +216,3 @@ safeIndex zs n = guard (n >= 0) >> go zs n
     go [] _ = Nothing
     go  (x:_) 0 = Just x
     go  (_:xs) i = go xs (pred i)
-
