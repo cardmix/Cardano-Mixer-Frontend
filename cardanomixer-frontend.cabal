@@ -17,6 +17,10 @@ executable cardanomixer
     ghc-options:      -dedupe
 
   other-modules:      App
+                    , App.Common
+                    , App.Deposit
+                    , App.Withdraw
+                    , Backend
                     , Client
                     , JS
                     , NamiJS

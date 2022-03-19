@@ -2,6 +2,10 @@
 {-# LANGUAGE JavaScriptFFI #-}
 module NamiJS where
 
+-- TODO: use hidden inputs to pass values from fromises
+-- cardano.nami.smth().then(
+-- (val) => {ok}
+
 import Control.Monad.IO.Class
 
 foreign import javascript unsafe
@@ -17,8 +21,10 @@ isEnabled = liftIO isEnabled_js
 foreign import javascript unsafe
   "(function() {\
     console.log('enable');\
+    cardano.nami.enable();\
   })();"
   enable_js :: IO ()
 
 enable :: MonadIO m => m ()
 enable = liftIO enable_js
+

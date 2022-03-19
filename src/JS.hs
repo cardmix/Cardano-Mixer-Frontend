@@ -24,23 +24,6 @@ runHeadScripts = liftIO runHeadScripts_js
 
 foreign import javascript unsafe
   "(function() {\
-    var val = 'HELLO';\
-    var el = document.getElementById($1);\
-    if (el != null) {\
-      el.value = val;\
-      var eChange = new Event('change');\
-      var eInput = new Event('input');\
-      el.dispatchEvent(eChange);\
-      el.dispatchEvent(eInput);\
-    };\
-  })();"
-  autofillAddr_js :: Text -> IO ()
-
-autofillAddr :: MonadIO m => Text -> m ()
-autofillAddr = liftIO . autofillAddr_js
-
-foreign import javascript unsafe
-  "(function() {\
     var el = document.getElementById($1);\
     if (el != null && navigator && navigator.clipboard && navigator.clipboard.writeText) {\
       navigator.clipboard.writeText(el.innerText);\
@@ -66,3 +49,21 @@ foreign import javascript unsafe
 
 saveTextFile :: MonadIO m => Text -> m ()
 saveTextFile = liftIO . saveTextFile_js
+
+foreign import javascript unsafe
+  "(function() {\
+    var val = 'HELLO';\
+    var el = document.getElementById($1);\
+    if (el != null) {\
+      el.value = val;\
+      var eChange = new Event('change');\
+      var eInput = new Event('input');\
+      el.dispatchEvent(eChange);\
+      el.dispatchEvent(eInput);\
+    };\
+  })();"
+  autofillAddr_js :: Text -> IO ()
+
+autofillAddr :: MonadIO m => Text -> m ()
+autofillAddr = liftIO . autofillAddr_js
+
