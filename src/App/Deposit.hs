@@ -16,8 +16,6 @@ import Reflex.Dom
 import System.Random
 import Text.Read (readMaybe)
 
-data Token = TokenADA | TokenTest deriving (Eq, Show, Ord, Bounded, Enum)
-
 tokenToAmountRange :: Token -> [Int]
 tokenToAmountRange = \case
   TokenADA -> [20, 100, 200, 300]
@@ -27,7 +25,7 @@ data ButtonState = ButtonConnect | ButtonDeposit deriving Eq
 
 depositForm :: MonadWidget t m => Dynamic t Bool -> m (Event t ())
 depositForm dWalletConnected = do
-  (eConn, eSubmitted) <- divClass "appformwrapper". divClass "form-block w-form"
+  eConn <- divClass "appformwrapper". divClass "form-block w-form"
     . el "form" $ mdo
       eToken <- selectInput "Token" tokenHint showToken TokenADA [minBound..]
       dToken <- holdDyn initToken eToken
@@ -39,7 +37,7 @@ depositForm dWalletConnected = do
       dAmount <- holdDyn (tokenInitAmount initToken) $ leftmost
         [eAmount, tokenInitAmount <$> eToken]
       inputTitle "Secret Key" keyHint
-      eTxSubmitted <- secretKeyInput (() <$ eDeposit)
+      key <- secretKeyInput (() <$ eDeposit)
       eeBtn <- divClass "mainbuttonwrapper" $ dyn $ dWalletConnected <&> \case
         False -> do
           (e, _) <- elAttr' "a" ("class" =: "button w-button") $
@@ -53,12 +51,13 @@ depositForm dWalletConnected = do
       let
         eConnect = ffilter (== ButtonConnect) eBtn
         eDeposit = ffilter (== ButtonDeposit) eBtn
-      return (() <$ eConnect, eTxSubmitted)
-  let elId = "deposit-form-msg"
-  widgetHold_ blank ((elAttr "div" ("class" =: "text-block-2" <> "id" =: elId) $
-    text "Сonfirm the transaction in your wallet") <$ eSubmitted)
+        depositArgs = zipDyn dToken dAmount
+      performEvent_ (runDeposit elId key <$ tagPromptlyDyn depositArgs eDeposit)
+      return $ () <$ eConnect
+  elAttr "div" ("class" =: "text-block-2" <> "id" =: elId) blank
   return eConn
   where
+    elId = "deposit-form-msg"
     initToken = TokenADA
     tokenInitAmount tok = let range = tokenToAmountRange tok in
       bool (P.head range) 0 (P.null range)
@@ -70,11 +69,11 @@ depositForm dWalletConnected = do
     amountHint = "It's an amount"
     keyHint = "It's a secret key"
 
-secretKeyInput :: MonadWidget t m => Event t () -> m (Event t ())
+secretKeyInput :: MonadWidget t m => Event t () -> m Integer
 secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
   key :: Integer <- liftIO $ randomRIO (0, p^3)
   performEvent_ (JS.saveTextFile (toText key) <$ eDeposit)
-  let keyId = "TextSecreteKey"
+  let keyId = "TextSecretKey"
   divClass colCls11 $ do
     let
       keyEnabledAttrs = "class" =: "textform" <> "id" =: keyId <> style
@@ -94,7 +93,7 @@ secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
       ("src" =: "/images/PictCopy.svg" <> "loading" =: "lazy" <>
         "width" =: "23" <> "class" =: "pictcopy") blank
     performEvent_ (copyElemContent keyId <$ domEvent Click e)
-  runDeposit key eDeposit
+  return key
   where
     colCls11 = "w-col w-col-11 w-col-small-11 w-col-tiny-11"
     colCls4 = "column-4 w-col w-col-1 w-col-small-1 w-col-tiny-1"

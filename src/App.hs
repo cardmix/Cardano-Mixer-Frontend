@@ -40,18 +40,24 @@ mainForm :: MonadWidget t m => m ()
 mainForm = divClass columnClass . divClass "divblockcentered" .
   divClass "columns-4 w-row" $ mdo
     dFormState <- holdDyn Deposit $ leftmost [eDeposit, eWithdraw]
-    isEnabled <- Nami.isEnabled
-    dWalletConnected <- holdDyn isEnabled (True <$ eConnect) -- make this an input to pass values
+    ePb <- getPostBuild >>= delay 0.5
+    performEvent_ (Nami.isEnabled elemId <$ ePb)
+    dWalletConnected <- fmap (fmap parseConnected . value) $ inputElement $ def
+      & initialAttributes .~ ("style" =: "display:none;" <> "id" =: elemId)
+      & inputElementConfig_initialValue .~ "false"
     eDeposit <- buttonSwitch Deposit dFormState
     eConnect <- divClass colCls8 $ do
       eeConnect <- dyn $ dFormState <&> \case
         Deposit -> depositForm dWalletConnected
         Withdraw -> withdrawForm >> return never
       switchHold never eeConnect
-    performEvent_ (Nami.enable <$ eConnect)
+    performEvent_ (Nami.enable elemId <$ eConnect)
     eWithdraw <- buttonSwitch Withdraw dFormState
     blank
   where
+    parseConnected "true" = True
+    parseConnected _ = False
+    elemId = "input-is-enabled"
     colCls8 = "w-col w-col-8 w-col-medium-8 w-col-small-8 w-col-tiny-8"
 
 buttonSwitch :: MonadWidget t m =>

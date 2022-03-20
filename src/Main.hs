@@ -33,6 +33,7 @@ headWidget = do
   elAttr "link" ("href" =: "/images/webclip.jpg" <> "rel" =: "apple-touch-icon")
     blank
   elAttr "script" ("src" =: "/js/Nami.js" <> "type" =: "text/javascript") blank
+  elAttr "script" ("src" =: "/js/static.js" <> "type" =: "text/javascript") blank
   where
     meta attr = elAttr "meta" attr blank
     stylesheet href = elAttr "link" ("href" =: href <> "rel" =: "stylesheet"

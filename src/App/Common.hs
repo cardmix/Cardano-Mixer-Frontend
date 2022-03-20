@@ -1,19 +1,10 @@
 module App.Common where
 
 import Control.Monad
-import Control.Monad.IO.Class
-import Data.Bool
-import Data.Functor ((<&>))
-import Data.List as L
 import Data.Maybe hiding (catMaybes)
 import Data.Text as T
-import Data.Witherable (catMaybes)
-import JS
-import NamiJS as Nami
 import Prelude as P
 import Reflex.Dom
-import System.Random
-import Text.Read (readMaybe)
 
 inputTitle :: MonadWidget t m => Text -> Text -> m ()
 inputTitle title hint = divClass "w-row" $ do

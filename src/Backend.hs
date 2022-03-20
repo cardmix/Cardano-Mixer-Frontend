@@ -3,8 +3,10 @@ module Backend where
 import Data.Text (Text)
 import Reflex.Dom hiding (Value)
 
-runDeposit :: MonadWidget t m => Integer -> Event t () -> m (Event t ())
-runDeposit _ e = delay 1 e
+data Token = TokenADA | TokenTest deriving (Eq, Show, Ord, Bounded, Enum)
+
+runDeposit :: MonadWidget t m => Text -> Integer -> (Token, Int) -> m ()
+runDeposit _ _ _ = return ()
 -- отправляет запрос к бэкенду, который возвращает String.
 -- Этот String отправляем в balanceTx -> signTx -> submitTx (это все функции API кошелька).
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP           #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE JavaScriptFFI #-}
 module NamiJS where
 
@@ -7,24 +7,25 @@ module NamiJS where
 -- (val) => {ok}
 
 import Control.Monad.IO.Class
+import Data.Text
 
 foreign import javascript unsafe
   "(function() {\
     console.log('isEnabled');\
-    return false;\
+    namiIsEnabled($1);\
   })();"
-  isEnabled_js :: IO Bool
+  isEnabled_js :: Text -> IO ()
 
-isEnabled :: MonadIO m => m Bool
-isEnabled = liftIO isEnabled_js
+isEnabled :: MonadIO m => Text -> m ()
+isEnabled = liftIO . isEnabled_js
 
 foreign import javascript unsafe
   "(function() {\
     console.log('enable');\
-    namiEnable('');\
+    namiEnable($1);\
   })();"
-  enable_js :: IO ()
+  enable_js :: Text -> IO ()
 
-enable :: MonadIO m => m ()
-enable = liftIO enable_js
+enable :: MonadIO m => Text -> m ()
+enable = liftIO . enable_js
 
