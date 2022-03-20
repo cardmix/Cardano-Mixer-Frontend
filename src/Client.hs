@@ -82,3 +82,7 @@ mkApiClient host = ApiClient{..}
   where
     (activateRequest :<|> statusRequest :<|> endpointRequest :<|> stopRequest)
       = client (Proxy @API') (Proxy @m) (Proxy @()) (pure host)
+
+makeResponse :: ReqResult tag a -> Maybe a
+makeResponse (ResponseSuccess _ a _) = Just a
+makeResponse _ = Nothing

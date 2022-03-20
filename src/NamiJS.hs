@@ -29,3 +29,12 @@ foreign import javascript unsafe
 enable :: MonadIO m => Text -> m ()
 enable = liftIO . enable_js
 
+foreign import javascript unsafe
+  "(function() {\
+    console.log('runDeposit');\
+    runDeposit($1, $2);\
+  })();"
+  runDeposit_js :: Text -> Text -> IO ()
+
+runDeposit :: MonadIO m => Text -> Text -> m ()
+runDeposit elId val = liftIO $ runDeposit_js elId val

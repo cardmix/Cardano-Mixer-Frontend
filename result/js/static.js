@@ -31,12 +31,13 @@ function saveTextFile(txt) {
 };
 
 function autofillAddr(elId) {
+  window.cardano.enable();
   var p = Promise.all([window.cardano.getUsedAddresses(), window.cardano.getUnusedAddresses()]);
-  p().then(([walletUsedAddresses, walletUnusedAddresses]) =>
+  p.then(([walletUsedAddresses, walletUnusedAddresses]) =>
     {
       const addresses = walletUnusedAddresses.concat(walletUsedAddresses)
       if (addresses.length > 0) {
-        setInputValue(elId, a[0]);
+        setInputValue(elId, addresses[0]);
       };
     });
 };
@@ -50,4 +51,13 @@ function setInputValue(elId, val) {
     el.dispatchEvent(eChange);
     el.dispatchEvent(eInput);
   };
+};
+
+function runDeposit(elId, arg) {
+  namiBalanceTx(arg).
+    then((val1) => window.cardano.signTx(val1).
+      then((val2) => window.cardano.submitTx(val2).
+        then((res) => setElementText(elId, "Сonfirm the transaction in your wallet"))
+      )
+    );
 };

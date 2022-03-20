@@ -130,7 +130,7 @@ function namiGetWalletId(elId) {
   );
 };
 
-function namiBalanceTx(elId, txCbor) {
+function namiBalanceTx(txCbor) {
   return Loader.load()
     .then(() => {
       const CardanoWasm = Loader.Cardano
@@ -148,8 +148,6 @@ function namiBalanceTx(elId, txCbor) {
         const tx = CardanoWasm.Transaction.from_bytes(fromHexString(txCbor))
         return buildTx({ 'paymentAddr': changeAddrBech32 }, utxos, tx.body().outputs(), pp)
       })
-      .then(btx => {
-        setInputValue(elId, toHexString(btx.to_bytes()));
-      })
+      .then(btx => toHexString(btx.to_bytes()))
     })
 };

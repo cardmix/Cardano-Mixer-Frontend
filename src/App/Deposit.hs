@@ -52,7 +52,7 @@ depositForm dWalletConnected = do
         eConnect = ffilter (== ButtonConnect) eBtn
         eDeposit = ffilter (== ButtonDeposit) eBtn
         depositArgs = zipDyn dToken dAmount
-      runDeposit elId key depositArgs eDeposit
+      runDeposit elId key depositArgs (() <$ eDeposit)
       return $ () <$ eConnect
   elAttr "div" ("class" =: "text-block-2" <> "id" =: elId) blank
   return eConn
@@ -114,4 +114,3 @@ selectInput title hint showFunc initVal valsRange = do
       showFunc $ val
     parseVal txt = readMaybe @Int (T.unpack txt) >>= safeIndex valsRange
     initValIdx = maybe "-1" toText $ L.elemIndex initVal valsRange
-

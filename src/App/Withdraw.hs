@@ -81,4 +81,3 @@ addressInput = divClass "w-row" $ mdo
     return (domEvent Click e)
   performEvent_ (autofillAddr elemId <$ eBtn)
   return $ value inp
-
