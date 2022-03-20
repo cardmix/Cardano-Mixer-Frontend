@@ -21,7 +21,7 @@ isEnabled = liftIO isEnabled_js
 foreign import javascript unsafe
   "(function() {\
     console.log('enable');\
-    cardano.nami.enable();\
+    namiEnable('');\
   })();"
   enable_js :: IO ()
 
