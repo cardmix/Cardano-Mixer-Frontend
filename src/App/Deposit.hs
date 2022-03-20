@@ -52,7 +52,7 @@ depositForm dWalletConnected = do
         eConnect = ffilter (== ButtonConnect) eBtn
         eDeposit = ffilter (== ButtonDeposit) eBtn
         depositArgs = zipDyn dToken dAmount
-      performEvent_ (runDeposit elId key <$ tagPromptlyDyn depositArgs eDeposit)
+      runDeposit elId key depositArgs eDeposit
       return $ () <$ eConnect
   elAttr "div" ("class" =: "text-block-2" <> "id" =: elId) blank
   return eConn

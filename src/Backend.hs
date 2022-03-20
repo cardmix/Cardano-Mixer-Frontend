@@ -5,8 +5,9 @@ import Reflex.Dom hiding (Value)
 
 data Token = TokenADA | TokenTest deriving (Eq, Show, Ord, Bounded, Enum)
 
-runDeposit :: MonadWidget t m => Text -> Integer -> (Token, Int) -> m ()
-runDeposit _ _ _ = return ()
+runDeposit :: MonadWidget t m => Text -> Integer -> Dynamic t (Token, Int) ->
+  Event t a -> m ()
+runDeposit _ _ _ _ = return ()
 -- отправляет запрос к бэкенду, который возвращает String.
 -- Этот String отправляем в balanceTx -> signTx -> submitTx (это все функции API кошелька).
 
