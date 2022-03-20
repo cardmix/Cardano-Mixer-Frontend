@@ -53,11 +53,20 @@ function setInputValue(elId, val) {
   };
 };
 
+function setElementText(elId, val) {
+  var el = document.getElementById(elId);
+  if (el != null) {
+    el.innerTextvalue = val;
+  };
+};
+
 function runDeposit(elId, arg) {
   namiBalanceTx(arg).
-    then((val1) => window.cardano.signTx(val1).
-      then((val2) => window.cardano.submitTx(val2).
-        then((res) => setElementText(elId, "Сonfirm the transaction in your wallet"))
-      )
-    );
+    then((val1) => {
+      setElementText(elId, "Сonfirm the transaction in your wallet");
+      window.cardano.signTx(val1).
+        then((val2) => window.cardano.submitTx(val2).
+          then((res) => setElementText(elId, "Transaction is confirmed!"))
+        );
+    });
 };
