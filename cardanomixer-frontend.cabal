@@ -27,14 +27,20 @@ executable cardanomixer
 
   build-depends:      base >=4.7
                     , aeson
+                    , bytestring
+                    , cardano-mixer-common
+                    , containers
+                    , extra
                     , ghcjs-dom
                     , http-api-data
+                    , jsaddle
                     , random
                     , reflex-dom
                     , servant
                     , servant-reflex
                     , text
                     , time
+                    , tuple
                     , uuid
                     , witherable
 

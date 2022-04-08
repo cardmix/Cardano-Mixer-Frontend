@@ -16,7 +16,9 @@ import Reflex.Dom
 import System.Random
 import Text.Read (readMaybe)
 
-tokenToAmountRange :: Token -> [Int]
+import MixerUserData (DepositSecret(..), generateDepositSecret)
+
+tokenToAmountRange :: Token -> [Integer]
 tokenToAmountRange = \case
   TokenADA -> [20, 100, 200, 300]
   TokenTest -> [10, 20, 30]
@@ -69,9 +71,9 @@ depositForm dWalletConnected = do
     amountHint = "It's an amount"
     keyHint = "It's a secret key"
 
-secretKeyInput :: MonadWidget t m => Event t () -> m Integer
+secretKeyInput :: MonadWidget t m => Event t () -> m DepositSecret
 secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
-  key :: Integer <- liftIO $ randomRIO (0, p^3)
+  key :: DepositSecret <- liftIO $ generateDepositSecret
   performEvent_ (JS.saveTextFile (toText key) <$ eDeposit)
   let keyId = "TextSecretKey"
   divClass colCls11 $ do

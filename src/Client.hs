@@ -10,6 +10,8 @@ import Reflex.Dom hiding (Value)
 import Servant.API
 import Servant.Reflex
 
+import MixerFrontendContractParams hiding (Value)
+
 -- Types
 
 newtype ContractInstanceId = ContractInstanceId { unContractInstanceId :: UUID }
@@ -38,10 +40,6 @@ instance FromJSON PartiallyDecodedResponse where
   parseJSON = withObject "PartiallyDecodedResponse" $ \v ->
     PartiallyDecodedResponse <$> v .: "observableState"
 
-newtype Wallet = Wallet { getWalletId :: String }
-    deriving stock (Eq, Show, Generic)
-    deriving anyclass (ToJSON, FromJSON)
-
 -- API
 
 type API contractId
@@ -56,7 +54,7 @@ type API contractId
       "stop" :> Put '[JSON] ()
     )
 
-type API' = API UUID
+type API' = API PABContracts
 
 -- Client
 
@@ -70,7 +68,7 @@ type ReqRes3 t m req1 req2 req3 res = DynReqBody t req1 -> DynReqBody t req2 ->
 
 data ApiClient t m = ApiClient
   { activateRequest
-    :: ReqRes t m (ContractActivationArgs UUID) ContractInstanceId
+    :: ReqRes t m (ContractActivationArgs PABContracts) ContractInstanceId
   , statusRequest :: ReqRes t m ContractInstanceId ContractState
   , endpointRequest :: ReqRes3 t m ContractInstanceId String JSON.Value ()
   , stopRequest :: ReqRes t m ContractInstanceId ()
@@ -86,3 +84,15 @@ mkApiClient host = ApiClient{..}
 makeResponse :: ReqResult tag a -> Maybe a
 makeResponse (ResponseSuccess _ a _) = Just a
 makeResponse _ = Nothing
+
+----------------------------------------------------------------------
+
+data MixerFrontendContracts = MixerUse | MixerStateQuery | ConnectToPAB
+    deriving (Eq, Ord, Show, Generic, FromJSON, ToJSON)
+
+data MixerBackendContracts = MintCurrency | MixerRelay | RetrieveTimeLocked | Dispense
+    deriving (Eq, Ord, Show, Generic, FromJSON, ToJSON)
+
+-- We use a wrapper to define contracts here
+data PABContracts = BackendContracts MixerBackendContracts | FrontendContracts MixerFrontendContracts
+    deriving (Eq, Ord, Show, Generic, FromJSON, ToJSON)

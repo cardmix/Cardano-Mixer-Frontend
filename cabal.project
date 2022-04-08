@@ -4,4 +4,4 @@ packages:
 source-repository-package
   type: git
   location: https://github.com/cardmix/Cardano-Mixer-Lib.git
-  tag: 47e30e2f8f468028b48d43dd835faf6b66fba518
+  tag: bda35e89cfd60ba0b062de18029fb4cde42e3f55

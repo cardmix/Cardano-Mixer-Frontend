@@ -1,9 +1,14 @@
 {-# LANGUAGE CPP           #-}
 {-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE DeriveAnyClass #-}
+
 module JS where
 
 import Control.Monad.IO.Class
 import Data.Text
+import GHC.Generics
+
+import Language.Javascript.JSaddle
 
 foreign import javascript unsafe
   "runHeadScripts();" runHeadScripts_js :: IO ()
@@ -28,3 +33,28 @@ foreign import javascript unsafe
 
 autofillAddr :: MonadIO m => Text -> m ()
 autofillAddr = liftIO . autofillAddr_js
+
+foreign import javascript unsafe
+  "fillProof($1, $2);" fillProof_js :: Text -> JSVal -> IO ()
+
+fillProof :: MonadIO m => Text -> WithdrawInputMap -> m ()
+fillProof elId wIM  = liftIO $ toJSVal wIM >>= fillProof_js elId
+
+data WithdrawInputMap = WithdrawInputMap
+  {
+    imRoot :: Text,
+    imAddr :: Text,
+    imH    :: Text,
+    imHA   :: Text,
+    imCurPos :: Text,
+    imOldHashReward :: Text,
+    imNewHashReward :: Text,
+    imR1 :: Text,
+    imR2 :: Text,
+    imO :: [Text],
+    imL :: [Text],
+    imV1 :: Text,
+    imV2 :: Text,
+    imV3 :: Text
+  }
+  deriving (Generic, ToJSVal)
