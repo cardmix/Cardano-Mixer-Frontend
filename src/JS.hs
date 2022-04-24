@@ -40,6 +40,12 @@ foreign import javascript unsafe
 fillProof :: MonadIO m => Text -> WithdrawInputMap -> m ()
 fillProof elId wIM  = liftIO $ toJSVal wIM >>= fillProof_js elId
 
+foreign import javascript unsafe
+  "console.log($1);" logInfoJS :: Text -> IO ()
+
+logInfo :: MonadIO m => Text -> m ()
+logInfo = liftIO . logInfoJS
+
 data WithdrawInputMap = WithdrawInputMap
   {
     imRoot :: Text,

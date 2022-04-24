@@ -11,7 +11,7 @@ import Prelude as P
 import Reflex.Dom
 
 data WithdrawState
-  = DepositNotFound | DepositFound Int Text | WithdrawInProgress
+  = FindInProgress | DepositNotFound | DepositFound Token Integer | WithdrawInProgress
   | WithdrawOk | WithdrawError
   deriving (Eq, Show)
 
@@ -31,8 +31,9 @@ withdrawForm = do
         btnAttrsDisabled = "class" =: "button w-button please-wait" <>
           "disabled" =: ""
         btnHidden = "style" =: "display: none;"
-        mkDepositEvent (Just (n, txt)) = Just $ DepositFound n txt
+        mkDepositEvent (Just (t, n)) = Just $ DepositFound t n
         mkDepositEvent _ = Just DepositNotFound
+        mkDepositAttrs (Just FindInProgress)     = btnAttrsDisabled
         mkDepositAttrs (Just (DepositFound _ _)) = btnHidden
         mkDepositAttrs (Just WithdrawInProgress) = btnHidden
         mkDepositAttrs _ = btnAttrs
@@ -40,7 +41,8 @@ withdrawForm = do
         mkWithdrawAttrs (Just WithdrawInProgress) = btnAttrsDisabled
         mkWithdrawAttrs _ = btnHidden
       dWithdrawState <- holdDyn Nothing $ leftmost
-        [ mkDepositEvent <$> eFindDeposit
+        [ Just FindInProgress <$ eDeposit
+        , mkDepositEvent <$> eFindDeposit
         , Just WithdrawInProgress <$ eWithdraw
         , Just WithdrawOk <$ ffilter id eWithdrawRes
         , Just WithdrawError <$ ffilter not eWithdrawRes ]
@@ -59,14 +61,14 @@ withdrawForm = do
   dyn_ $ dState <&> maybe blank (divClass "textinfoaboutwithdraw" . text . ppState)
   where
     ppState = \case
-      DepositNotFound -> "Error: deposit is not found"
-      DepositFound n txt -> toText n <> " " <> txt <> " is found"
-      WithdrawInProgress -> "Withdrawing takes time, please, wait!"
-      WithdrawOk -> "Withdrawing is finished!"
-      WithdrawError -> "Error: withdrawing failed"
-    -- TODO: hint texts
-    addrHint = "Address"
-    keyHint = "Key"
+      FindInProgress -> "Searching for the deposit..."
+      DepositNotFound -> "No deposit corresponding to this secret key."
+      DepositFound t n -> toText n <> " " <> toText t <> " is found"
+      WithdrawInProgress -> "Computing proof of knowledge..."
+      WithdrawOk -> "Withdrawal request has been sent!"
+      WithdrawError -> "Withdrawal data is not correct."
+    addrHint = "The recipient's wallet address in bech32 format, e.g. addr_test1abc123..."
+    keyHint  = "A Secret Key that was generated during a deposit."
 
 addressInput :: MonadWidget t m => m (Dynamic t Text)
 addressInput = divClass "w-row" $ mdo
@@ -76,8 +78,14 @@ addressInput = divClass "w-row" $ mdo
       "id" =: elemId <> "maxlength" =: "256" <>
       "placeholder" =: "Please, enter a wallet address")
   eBtn <- divClass "column-4 w-col w-col-3" do
-    (e, _) <- elAttr' "a" ("class" =: "buttonautofil w-button" <>
-      "style" =: "cursor:pointer;") $ text "Autofill"
+    (e, _) <- elDynAttr' "a" (mkAutofillAttrs <$> dAutofillComplete) $ text "Autofill"
     return (domEvent Click e)
   performEvent_ (autofillAddr elemId <$ eBtn)
-  return $ value inp
+  let dAddr = value inp
+      btnAttrs = "class" =: "buttonautofil w-button" <> "style" =: "cursor:pointer;"
+      btnAttrsDisabled = "class" =: "buttonautofil w-button please-wait" <>
+          "disabled" =: ""
+      mkAutofillAttrs b = if b then btnAttrs else btnAttrsDisabled
+  dAutofillComplete <- holdDyn True $ leftmost [False <$ eBtn, True <$ updated dAddr]
+  
+  return dAddr

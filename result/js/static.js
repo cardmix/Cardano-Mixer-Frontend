@@ -1,3 +1,5 @@
+const loader = new Loader();
+
 function runHeadScripts() {
   WebFont.load(
     {google:{families:
@@ -10,6 +12,8 @@ function runHeadScripts() {
       n.className+=t+'touch';
     }
   }(window,document);
+  
+  loader.load();
 };
 
 function copyElemContent(elId) {
@@ -88,7 +92,7 @@ function setInputValue(elId, val) {
 function setElementText(elId, val) {
   var el = document.getElementById(elId);
   if (el != null) {
-    el.innerTextvalue = val;
+    el.innerText = val;
   };
 };
 
@@ -105,25 +109,25 @@ function setElementText(elId, val) {
 
 function runDeposit(elId, elTx, arg) {
   setElementText(elId, "Сonfirm the transaction in your wallet");
-  window.cardano.enable();
-  window.cardano.signTx(arg, true).
-      then((res) => {
-        const abc = new Loader()
-        return abc.load()
-          .then(() => {
-            const CardanoWasm = abc.Cardano;
-            const transaction = CardanoWasm.Transaction.from_bytes(fromHexString(arg));
-            const transactionWitnessSet = transaction.witness_set()
-            const transactionBody = transaction.body()
-            const txVkeyWitnesses = CardanoWasm.TransactionWitnessSet.from_bytes(
-              fromHexString(res)
-            );
+  window.cardano.nami.enable().
+    then((api) => {
+      const abc = new Loader();
+      return abc.load()
+      .then(() => {
+        const CardanoWasm = abc.Cardano;
+        const transaction = CardanoWasm.Transaction.from_bytes(fromHexString(arg));
+        const transactionWitnessSet = transaction.witness_set();
+        const transactionBody = transaction.body();
+        api.signTx(arg, true).
+          then((res) => {
+            const txVkeyWitnesses = CardanoWasm.TransactionWitnessSet.from_bytes(fromHexString(res));
             transactionWitnessSet.set_vkeys(txVkeyWitnesses.vkeys());
             const readyToSubmit = CardanoWasm.Transaction.new(transactionBody, transactionWitnessSet);
-            const finalTx = toHexString(readyToSubmit.to_bytes())
+            const finalTx = toHexString(readyToSubmit.to_bytes());
             setInputValue(elTx, finalTx);
-            setElementText(elTx, "Transaction is confirmed!");
-      })
-      })
+      }, (res) => { setInputValue(elTx, ""); })
+    },
+      (res) => { setInputValue(elTx, ""); })
+    })
 };
 

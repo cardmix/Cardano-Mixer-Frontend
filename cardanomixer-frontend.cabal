@@ -36,6 +36,7 @@ executable cardanomixer
                     , jsaddle
                     , random
                     , reflex-dom
+                    , reflex-dom-contrib
                     , servant
                     , servant-reflex
                     , text

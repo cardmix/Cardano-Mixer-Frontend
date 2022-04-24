@@ -18,6 +18,10 @@
       rev = "0ea5b145f189ee6b9fa56b4b98009f1df8f29490" ;
       ref = "uverb-stuff" ;
     } ;
+    reflexDomContribSrc = builtins.fetchGit {
+      url = "https://github.com/reflex-frp/reflex-dom-contrib.git";
+      rev = "11db20865fd275362be9ea099ef88ded425789e7";
+    };
 
   in self: super: with pkgs.haskell.lib; {
     servant-openapi3 = super.callHackage "servant-openapi3" "2.0.1.1" {};
@@ -37,6 +41,7 @@
     optics-th = super.callHackage "optics-th" "0.2" {};
     quickcheck-instances = doJailbreak super.quickcheck-instances;
     reflex-dom-core = dontCheck super.reflex-dom-core;
+    reflex-dom-contrib = doJailbreak (super.callCabal2nix "reflex-dom-contrib" reflexDomContribSrc { });
     servant = doJailbreak (super.callHackage "servant" "0.18.2" {});
     servant-reflex = doJailbreak (super.callCabal2nix "servant-reflex" servantReflexSrc {});
     sop-core = super.callHackage "sop-core" "0.5.0.1" {};
