@@ -1,5 +1,5 @@
-{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE NumericUnderscores #-}
 
 module Backend where
 
@@ -98,8 +98,8 @@ runDeposit elId dKey dReq eDeposit = do
   return $ leftmost [DepositSuccess <$ eRespReturn, DepositFailure <$ eSigningFailure]
   where
     elemId = "deposit-addr-elem"
-    pabIP = BasePath "TODO"
-    mkDepositParams key (token, amount) = Right JSON.Null -- ???
+    elemIdTx = "tx-signed-elem"
+    mkDepositParams key addr (token, amount) = Right $ JSON.toJSON $ DepositParams addr (toValue token amount) (mimcHash (getR1 key) (getR2 key))
 
 findDeposit :: MonadWidget t m => Dynamic t Text -> Dynamic t Text
   -> Event t () -> m (Event t (Maybe (Token, Integer)))

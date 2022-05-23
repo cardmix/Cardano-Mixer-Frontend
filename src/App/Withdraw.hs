@@ -31,8 +31,9 @@ withdrawForm = do
         btnAttrsDisabled = "class" =: "button w-button please-wait" <>
           "disabled" =: ""
         btnHidden = "style" =: "display: none;"
-        mkDepositEvent (Just (n, txt)) = Just $ DepositFound n txt
+        mkDepositEvent (Just (t, n)) = Just $ DepositFound t n
         mkDepositEvent _ = Just DepositNotFound
+        mkDepositAttrs (Just FindInProgress)     = btnAttrsDisabled
         mkDepositAttrs (Just (DepositFound _ _)) = btnHidden
         mkDepositAttrs (Just WithdrawInProgress) = btnHidden
         mkDepositAttrs _ = btnAttrs
@@ -40,7 +41,8 @@ withdrawForm = do
         mkWithdrawAttrs (Just WithdrawInProgress) = btnAttrsDisabled
         mkWithdrawAttrs _ = btnHidden
       dWithdrawState <- holdDyn Nothing $ leftmost
-        [ mkDepositEvent <$> eFindDeposit
+        [ Just FindInProgress <$ eDeposit
+        , mkDepositEvent <$> eFindDeposit
         , Just WithdrawInProgress <$ eWithdraw
         , Just WithdrawOk <$ ffilter id eWithdrawRes
         , Just WithdrawError <$ ffilter not eWithdrawRes ]

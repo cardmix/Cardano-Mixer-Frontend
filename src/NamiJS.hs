@@ -45,13 +45,13 @@ enable = liftIO . enable_js
 foreign import javascript unsafe
   "(function() {\
     console.log('runDeposit');\
-    runDeposit($1, $2);\
+    runDeposit($1, $2, $3);\
   })();"
-  runDeposit_js :: Text -> Text -> IO ()
+  runDeposit_js :: Text -> Text -> Text -> IO ()
 #else
-runDeposit_js :: Text -> Text -> IO ()
-runDeposit_js = const . const $ error "GHCJS is required!"
+runDeposit_js :: Text -> Text -> Text -> IO ()
+runDeposit_js = const . const . const $ error "GHCJS is required!"
 #endif
 
-runDeposit :: MonadIO m => Text -> Text -> m ()
-runDeposit elId val = liftIO $ runDeposit_js elId val
+runDeposit :: MonadIO m => Text -> Text -> Text -> m ()
+runDeposit elId elTx val = liftIO $ runDeposit_js elId elTx val

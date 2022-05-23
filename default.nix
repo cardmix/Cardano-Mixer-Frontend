@@ -46,6 +46,7 @@
     optics-th = super.callHackage "optics-th" "0.2" {};
     quickcheck-instances = doJailbreak super.quickcheck-instances;
     reflex-dom-core = dontCheck super.reflex-dom-core;
+    reflex-dom-contrib = doJailbreak (super.callCabal2nix "reflex-dom-contrib" reflexDomContribSrc { });
     servant = doJailbreak (super.callHackage "servant" "0.18.2" {});
     servant-reflex = doJailbreak (super.callCabal2nix "servant-reflex" servantReflexSrc {});
     sop-core = super.callHackage "sop-core" "0.5.0.1" {};

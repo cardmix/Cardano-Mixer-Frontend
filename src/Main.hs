@@ -18,22 +18,29 @@ headWidget = do
   meta $ "content" =: "Cardano Mixer DApp" <> "property" =: "twitter:title"
   meta $ "content" =: "width=device-width, initial-scale=1" <>
     "name" =: "viewport"
-  stylesheet "/css/normalize.css"
-  stylesheet "/css/webflow.css"
-  stylesheet "/css/cardanomixer-design-b1546-9b66de9866e02.webflow.css"
-  eScriptLoaded <- domEvent Load . fst <$> elAttr' "script"
-    ("src" =: "https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"
-      <> "type" =: "text/javascript") blank
-  performEvent_ (runHeadScripts <$ eScriptLoaded)
+  stylesheet "css/normalize.css"
+  stylesheet "css/webflow.css"
+  stylesheet "css/cardanomixer-design-b1546-9b66de9866e02.webflow.css"
   elAttr "link" ("rel" =: "stylesheet" <> "media" =: "all" <>
     "href" =: "http://fonts.googleapis.com/css?family=Droid+Serif:400,\
       \400italic,700,700italic%7CCorben:regular%7CFenix:regular") blank
-  elAttr "link" ("href" =: "/images/favicon.png" <> "rel" =: "shortcut icon" <>
+  elAttr "link" ("href" =: "images/favicon.png" <> "rel" =: "shortcut icon" <>
     "type" =: "image/x-icon") blank
-  elAttr "link" ("href" =: "/images/webclip.jpg" <> "rel" =: "apple-touch-icon")
+  elAttr "link" ("href" =: "images/webclip.jpg" <> "rel" =: "apple-touch-icon")
     blank
-  elAttr "script" ("src" =: "/js/Nami.js" <> "type" =: "text/javascript") blank
-  elAttr "script" ("src" =: "/js/static.js" <> "type" =: "text/javascript") blank
+  eWebFontLoaded <- domEvent Load . fst <$> elAttr' "script"
+    ("src" =: "https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"
+      <> "type" =: "text/javascript") blank
+  eStaticLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "js/static.js" <> "type" =: "text/javascript") blank
+  eLoaderLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "nami-wallet/src/api/loader.js" <> "type" =: "text/javascript") blank
+  elAttr "script" ("src" =: "js/Nami.js" <> "type" =: "text/javascript") blank
+  elAttr "script" ("src" =: "js/snarkjs.min.js" <> "type" =: "text/javascript") blank
+
+  dWebFontLoaded  <- holdDyn False (True <$ eWebFontLoaded)
+  dStaticLoaded   <- holdDyn False (True <$ eStaticLoaded)
+  dLoaderLoaded   <- holdDyn False (True <$ eLoaderLoaded)
+  let eScriptsLoaded = ffilter (== True) $ updated $ foldl (zipDynWith (&&)) (pure True) [dWebFontLoaded, dStaticLoaded, dLoaderLoaded]
+  performEvent_ (runHeadScripts <$ eScriptsLoaded)
   where
     meta attr = elAttr "meta" attr blank
     stylesheet href = elAttr "link" ("href" =: href <> "rel" =: "stylesheet"
@@ -41,7 +48,7 @@ headWidget = do
 
 bodyWidget :: MonadWidget t m => m ()
 bodyWidget = do
-  navbarWidget
+  -- navbarWidget
   logoWidget
   appWidget
   divClass "sectionlogo wf-section" .
