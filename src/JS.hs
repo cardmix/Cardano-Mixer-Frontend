@@ -1,14 +1,15 @@
-{-# LANGUAGE CPP           #-}
-{-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE CPP                 #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE JavaScriptFFI       #-}
+
 {-# HLINT ignore "Use camelCase" #-}
-{-# LANGUAGE DeriveAnyClass #-}
 
 module JS where
 
-import Control.Monad.IO.Class
-import Data.Text
-import GHC.Generics (Generic)
-import Language.Javascript.JSaddle
+import           Control.Monad.IO.Class      (MonadIO(..))
+import           Data.Text                   (Text)
+import           GHC.Generics                (Generic)
+import           Language.Javascript.JSaddle (ToJSVal(..), JSVal)
 
 #ifdef __GHCJS__
 foreign import javascript unsafe

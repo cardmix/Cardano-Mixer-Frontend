@@ -1,14 +1,12 @@
 module App.Withdraw where
 
-import App.Common
-import Backend
-import Data.Bool
-import Data.Functor ((<&>))
-import Data.Maybe
-import Data.Text as T
-import JS
-import Prelude as P
-import Reflex.Dom
+import           Data.Functor  ((<&>))
+import           Data.Text     (Text)
+import           Reflex.Dom
+
+import           App.Common
+import           Backend
+import           JS            (autofillAddr)
 
 data WithdrawState
   = FindInProgress | DepositNotFound | DepositFound Token Integer | WithdrawInProgress
@@ -51,7 +49,7 @@ withdrawForm = do
           (mkDepositAttrs <$> dWithdrawState) $ text "Find deposit"
         return (domEvent Click e)
       eFindDeposit <- findDeposit dAddr dKey eDeposit
-      dDepositRes <- holdDyn Nothing eFindDeposit
+      _ <- holdDyn Nothing eFindDeposit
       eWithdraw <- do
         (e, _) <- elAttr' "div" ("class" =: "mainbuttonwrapper") . elDynAttr "a"
           (mkWithdrawAttrs <$> dWithdrawState) $ text "Withdraw"
@@ -70,6 +68,7 @@ withdrawForm = do
     addrHint = "The recipient's wallet address in bech32 format, e.g. addr_test1abc123..."
     keyHint  = "A Secret Key that was generated during a deposit."
 
+-- Address input element
 addressInput :: MonadWidget t m => m (Dynamic t Text)
 addressInput = divClass "w-row" $ mdo
   let elemId = "EnterWalletAddress"

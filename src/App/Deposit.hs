@@ -1,67 +1,63 @@
 module App.Deposit where
 
-import App.Common
-import Backend
-import Control.Monad
-import Control.Monad.IO.Class
-import Data.Bool
-import Data.Functor ((<&>))
-import Data.List as L
-import Data.Maybe hiding (catMaybes)
-import Data.Text as T
-import Data.Witherable (catMaybes)
-import JS
-import Prelude as P
-import Reflex.Dom
-import Text.Read (readMaybe)
+import           Control.Monad.IO.Class (liftIO)
+import           Data.Bool              (bool)
+import           Data.Functor           ((<&>))
+import           Data.List              (elemIndex)
+import           Data.Text              (Text, pack, unpack)
+import           Data.Witherable        (catMaybes)
+import           Reflex.Dom
+import           Text.Read              (readMaybe)
 
-import Crypto
-import MixerUserData (DepositSecret(..), generateDepositSecret)
+import           App.Common
+import           Backend
+import           Crypto                 (Zp(..))
+import           JS                     (copyElemContent, saveTextFile)
+import           MixerUserData          (DepositSecret(..), generateDepositSecret)
 
 data ButtonState = ButtonConnect | ButtonDeposit deriving Eq
 
 depositForm :: MonadWidget t m => Dynamic t Bool -> m (Event t ())
 depositForm dWalletConnected = do
-  (eConn, dState) <- divClass "appformwrapper". divClass "form-block w-form"
-    . el "form" $ mdo
-      eToken <- selectInput "Token" tokenHint showToken TokenADA [minBound..]
-      dToken <- holdDyn initToken eToken
-      eAmount <- switchHold never =<< dyn (dToken <&> \tok -> do
-        let
-          range = tokenToAmountRange tok
-          initAmount = tokenInitAmount tok
-        selectInput "Amount" amountHint toText initAmount range)
-      dAmount <- holdDyn (tokenInitAmount initToken) $ leftmost
-        [eAmount, tokenInitAmount <$> eToken]
-      inputTitle "Secret Key" keyHint
-      key <- secretKeyInput (() <$ eDeposit)
-      dDepositState <- holdDyn DepositInitial $ leftmost [DepositInProgress <$ eDeposit, eTxConstructed]
-      let btnAttrs         = "class" =: "button w-button" <> "style" =: "cursor:pointer;"
-          btnAttrsDisabled = "class" =: "button w-button please-wait" <> "disabled" =: ""
-          mkDepositAttrs DepositInProgress = btnAttrsDisabled
-          mkDepositAttrs _                 = btnAttrs
-      eeBtn <- divClass "mainbuttonwrapper" $ dyn $ dWalletConnected <&> \case
-        False -> do
-          (e, _) <- elAttr' "a" ("class" =: "button w-button") $
-            text "Connect to wallet"
-          return (ButtonConnect <$ domEvent Click e)
-        True -> do
-          (e, _) <- elDynAttr' "a" (mkDepositAttrs <$> dDepositState) $ text "Deposit"
-          return (ButtonDeposit <$ domEvent Click e)
-      eBtn <- switchHold never eeBtn
+  (eConn, dState) <- divClass "appformwrapper". divClass "form-block w-form" . el "form" $ mdo
+    eToken <- selectInput "Token" tokenHint showToken TokenADA [minBound..]
+    dToken <- holdDyn initToken eToken
+    eAmount <- switchHold never =<< dyn (dToken <&> \tok -> do
       let
-        eConnect = ffilter (== ButtonConnect) eBtn
-        eDeposit = ffilter (== ButtonDeposit) eBtn
-        depositArgs = zipDyn dToken dAmount
-      eTxConstructed <- runDeposit elId key depositArgs (() <$ eDeposit)
-      return $ (() <$ eConnect, dDepositState)
+        range = tokenToAmountRange tok
+        initAmount = tokenInitAmount tok
+      selectInput "Amount" amountHint toText initAmount range)
+    dAmount <- holdDyn (tokenInitAmount initToken) $ leftmost
+      [eAmount, tokenInitAmount <$> eToken]
+    inputTitle "Secret Key" keyHint
+    key <- secretKeyInput (() <$ eDeposit)
+    dDepositState <- holdDyn DepositInitial $ leftmost [DepositInProgress <$ eDeposit, eTxConstructed]
+    let btnAttrs         = "class" =: "button w-button" <> "style" =: "cursor:pointer;"
+        btnAttrsDisabled = "class" =: "button w-button please-wait" <> "disabled" =: ""
+        mkDepositAttrs DepositInProgress = btnAttrsDisabled
+        mkDepositAttrs _                 = btnAttrs
+    eeBtn <- divClass "mainbuttonwrapper" $ dyn $ dWalletConnected <&> \case
+      False -> do
+        (e, _) <- elAttr' "a" ("class" =: "button w-button") $
+          text "Connect to wallet"
+        return (ButtonConnect <$ domEvent Click e)
+      True -> do
+        (e, _) <- elDynAttr' "a" (mkDepositAttrs <$> dDepositState) $ text "Deposit"
+        return (ButtonDeposit <$ domEvent Click e)
+    eBtn <- switchHold never eeBtn
+    let
+      eConnect = ffilter (== ButtonConnect) eBtn
+      eDeposit = ffilter (== ButtonDeposit) eBtn
+      depositArgs = zipDyn dToken dAmount
+    eTxConstructed <- runDeposit elId key depositArgs (() <$ eDeposit)
+    return $ (() <$ eConnect, dDepositState)
   dyn_ $ dState <&> (elAttr "div" ("class" =: "text-block-2" <> "id" =: elId) . text . ppState)
   return eConn
   where
     elId = "deposit-form-msg"
     initToken = TokenADA
     tokenInitAmount tok = let range = tokenToAmountRange tok in
-      bool (P.head range) 0 (P.null range)
+      bool (head range) 0 (null range)
     ppState = \case
       DepositInitial    -> ""
       DepositInProgress -> "Constructing transaction..."
@@ -75,9 +71,9 @@ depositForm dWalletConnected = do
     keyHint = pack $ "Save the secret key generated during a deposit. It will be used to withdraw tokens from the protocol. " ++ 
       "A copy of the Secret Key is automatically saved in your default Downloads folder."
 
+-- Secret Key element
 secretKeyInput :: MonadWidget t m => Event t () -> m (Dynamic t DepositSecret)
 secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
-  -- key :: DepositSecret <- liftIO $ generateDepositSecret
   eKey <- performEvent (liftIO generateDepositSecret <$ eDeposit)
   dKey <- holdDyn (DepositSecret (Zp 0) (Zp 0)) eKey
   performEvent_ (fmap (JS.saveTextFile . toText) eKey)
@@ -106,6 +102,7 @@ secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
     colCls11 = "w-col w-col-11 w-col-small-11 w-col-tiny-11"
     colCls4 = "column-4 w-col w-col-1 w-col-small-1 w-col-tiny-1"
 
+-- Dropdown list element
 selectInput :: (MonadWidget t m, Eq a) => Text -> Text -> (a -> Text) -> a
   -> [a] -> m (Event t a)
 selectInput title hint showFunc initVal valsRange = do
@@ -114,10 +111,10 @@ selectInput title hint showFunc initVal valsRange = do
     & initialAttributes .~ ("class" =: "select-field w-select")
     & selectElementConfig_initialValue .~ initValIdx)
     $ do
-      mapM_ mkOption . P.zip [0..] $ valsRange
+      mapM_ mkOption . zip [0..] $ valsRange
   return $ catMaybes $ parseVal <$> input
   where
     mkOption (idx::Int, val) = elAttr "option" ("value" =: toText idx) . text .
       showFunc $ val
-    parseVal txt = readMaybe @Int (T.unpack txt) >>= safeIndex valsRange
-    initValIdx = maybe "-1" toText $ L.elemIndex initVal valsRange
+    parseVal txt = readMaybe @Int (unpack txt) >>= safeIndex valsRange
+    initValIdx = maybe "-1" toText $ elemIndex initVal valsRange

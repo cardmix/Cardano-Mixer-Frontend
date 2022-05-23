@@ -1,5 +1,6 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE JavaScriptFFI #-}
+{-# LANGUAGE CPP                 #-}
+{-# LANGUAGE JavaScriptFFI       #-}
+
 {-# HLINT ignore "Use camelCase" #-}
 
 module NamiJS where
@@ -8,8 +9,8 @@ module NamiJS where
 -- cardano.nami.smth().then(
 -- (val) => {ok}
 
-import Control.Monad.IO.Class
-import Data.Text
+import           Control.Monad.IO.Class (MonadIO(..))
+import           Data.Text              (Text)
 
 #ifdef __GHCJS__
 foreign import javascript unsafe

@@ -1,10 +1,8 @@
 module App.Common where
 
-import Control.Monad
-import Data.Maybe hiding (catMaybes)
-import Data.Text as T
-import Prelude as P
-import Reflex.Dom
+import           Control.Monad        (guard)
+import           Data.Text            (Text, pack)
+import           Reflex.Dom
 
 inputTitle :: MonadWidget t m => Text -> Text -> m ()
 inputTitle title hint = divClass "w-row" $ do
@@ -18,7 +16,7 @@ inputTitle title hint = divClass "w-row" $ do
     colCls3 = "column-3 w-col w-col-6 w-col-medium-6 w-col-small-6 w-col-tiny-6"
 
 toText :: Show a => a -> Text
-toText = T.pack . show
+toText = pack . show
 
 safeIndex :: [a] -> Int -> Maybe a
 safeIndex zs n = guard (n >= 0) >> go zs n

@@ -1,14 +1,15 @@
 {-# LANGUAGE DeriveAnyClass #-}
+
 module Client where
 
-import Data.Aeson as JSON
-import Data.Proxy
-import Data.Text (Text)
-import Data.UUID (UUID)
-import GHC.Generics
-import Reflex.Dom hiding (Value)
-import Servant.API
-import Servant.Reflex
+import           Data.Aeson         as JSON
+import           Data.Proxy         (Proxy(..))
+import           Data.Text          (Text)
+import           Data.UUID          (UUID)
+import           GHC.Generics       (Generic)
+import           Reflex.Dom         hiding (Value)
+import           Servant.API
+import           Servant.Reflex
 
 -- Types
 

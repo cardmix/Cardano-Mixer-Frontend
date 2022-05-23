@@ -1,9 +1,10 @@
 module Main where
 
-import App
-import Data.Bool
-import JS
-import Reflex.Dom
+import           Data.Bool          (bool)
+import           Reflex.Dom
+
+import           App                (appWidget)
+import           JS                 (runHeadScripts)
 
 main :: IO ()
 main = mainWidgetWithHead headWidget bodyWidget

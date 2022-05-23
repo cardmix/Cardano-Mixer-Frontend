@@ -3,31 +3,30 @@
 
 module Backend where
 
-import Client
-import Data.Aeson hiding (Value)
-import qualified Data.Aeson as JSON
-import Data.Text ( Text, pack )
-import Data.UUID as UUID
-import Data.Witherable
-import JS
-import NamiJS as Nami
-import Reflex.Dom hiding (Value)
-import Servant.Reflex
-
-import GHC.Generics
-
-import Crypto
-import MixerContractParams
-import MixerUserData
-import Data.Tuple.Extra
+import           Data.Aeson           hiding (Value)
+import qualified Data.Aeson           as JSON
+import           Data.ByteString.Lazy (fromStrict)
+import           Data.List            (find)
 import qualified Data.Map
-import Data.Maybe (isJust, isNothing, fromMaybe)
-import Data.ByteString.Lazy (fromStrict)
-import Data.Text.Encoding
-import MixerState
-import MixerProofs
-import Data.Tuple.Select
-import Data.List (find)
+import           Data.Maybe           (isJust, isNothing, fromMaybe)
+import           Data.Text            (Text, pack)
+import           Data.Text.Encoding   (encodeUtf8)
+import           Data.Tuple.Extra     (snd3, thd3)
+import           Data.Tuple.Select
+import           Data.UUID            (nil)
+import           Data.Witherable
+import           GHC.Generics         (Generic)
+import           Reflex.Dom           hiding (Value)
+import           Servant.Reflex       (BaseUrl(..))
+
+import           Client
+import           Crypto
+import           JS
+import           MixerContractParams
+import           MixerProofs          (computeWithdrawWires)
+import           MixerState           (MixerState, getMerkleLeafNumber)
+import           MixerUserData
+import           NamiJS               as Nami
 
 data DepositState = DepositInitial | DepositInProgress | DepositSuccess | DepositFailure deriving Eq
 
@@ -58,7 +57,7 @@ pabIP = BasePath "http://127.0.0.1:9080"
   -- BasePath "https://m8cn730xz7.execute-api.eu-central-1.amazonaws.com/"
 
 defCID :: ContractInstanceId
-defCID = ContractInstanceId UUID.nil
+defCID = ContractInstanceId nil
 
 runDeposit :: MonadWidget t m => Text -> Dynamic t DepositSecret -> Dynamic t (Token, Integer) ->
   Event t () -> m (Event t DepositState)
@@ -103,7 +102,7 @@ runDeposit elId dKey dReq eDeposit = do
 
 findDeposit :: MonadWidget t m => Dynamic t Text -> Dynamic t Text
   -> Event t () -> m (Event t (Maybe (Token, Integer)))
-findDeposit dAddr dKey e = do
+findDeposit _ dKey e = do
   let client@ApiClient{..} = mkApiClient pabIP
 
   let
@@ -147,7 +146,7 @@ runWithdraw dAddr dKey e = do
 
   let dWires    = mkProveArgs <$> dAddrNum <*> dSecret <*> dMixerState
       dLastDeposit = fmap sel1 dWires
-      dOuts        = fmap sel2 dWires
+      _            = fmap sel2 dWires
       dPubIns      = fmap sel3 dWires
       dPrivIns     = fmap sel4 dWires
       dSubsIns     = zipDynWith (++) dPubIns dPrivIns
@@ -167,7 +166,7 @@ runWithdraw dAddr dKey e = do
   cidMixerWithdraw <- fmap Right <$> holdDyn defCID aRespWithdraw'
   eRespWithdraw <- endpointRequest cidMixerWithdraw (pure . pure $ "withdraw") (Right . JSON.toJSON <$> dParams) (() <$ updated cidMixerWithdraw)
   let eRespWithdraw' = catMaybes $ makeResponse <$> eRespWithdraw
-  eWithdrawMessage <- getStatus client 50 cidMixerWithdraw $ () <$ eRespWithdraw
+  eWithdrawMessage <- getStatus client 50 cidMixerWithdraw eRespWithdraw'
 
   -- eNoResponse <- delay 180 e
   -- return $ leftmost [True <$ eRespWithdraw, False <$ ffilter isNothing eFindDepositRes]
@@ -182,7 +181,7 @@ runWithdraw dAddr dKey e = do
 ------------------------------------------------------------------
 
 connectToPAB :: forall t m . MonadWidget t m => ApiClient t m -> Dynamic t Text -> Event t () -> m (Dynamic t (PaymentPubKeyHash, Fr, Wallet))
-connectToPAB client@ApiClient{..} dAddr e = do
+connectToPAB ApiClient{..} dAddr e = do
   aRespConnect <- activateRequest (pure . pure $ ContractActivationArgs (FrontendContracts ConnectToPAB) Nothing) e
   let aRespConnect' = catMaybes $ makeResponse <$> aRespConnect
   cidPAB <- fmap Right <$> holdDyn defCID aRespConnect'
