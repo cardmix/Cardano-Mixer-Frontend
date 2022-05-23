@@ -11,7 +11,7 @@ inputTitle title hint = divClass "w-row" $ do
   divClass colCls6 . elAttr "label" ("class" =: "field-label") $ text title
   divClass colCls3 . elAttr "a" ("class" =: "buttoninfo w-inline-block" <>
     "title" =: hint <> "style" =: "cursor:pointer;") .
-    elAttr "img" ("src" =: "/images/InfoPict.svg" <> "loading" =: "lazy" <>
+    elAttr "img" ("src" =: "images/InfoPict.svg" <> "loading" =: "lazy" <>
       "width" =: "23" <> "class" =: "infopict") $ blank
   where
     colCls6 = "w-col w-col-6 w-col-medium-6 w-col-small-6 w-col-tiny-6"

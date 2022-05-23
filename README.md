@@ -23,7 +23,11 @@ Run this command to start nix shell (it may take some time):
 nix-shell -E '(import ./default.nix { }).shells.ghcjs'
 ```
 
-In the shell, run `cabal build --ghcjs -f frontend` to build it.
+In the shell, run
+```
+cabal new-build --ghcjs --cabal-file=cardanomixer-frontend.cabal
+```
+to build it.
 
 Copy `all.js` file to `result/`:
 

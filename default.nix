@@ -1,7 +1,7 @@
 { reflex-platform ? ((import <nixpkgs> {}).fetchFromGitHub {
     owner = "reflex-frp";
     repo = "reflex-platform";
-    rev = "efc6d923c633207d18bd4d8cae3e20110a377864";
+    rev = "123a6f487ca954fd983f6d4cd6b2a69d4c463d10";
     sha256 = "121rmnkx8nwiy96ipfyyv6vrgysv0zpr2br46y70zf4d0y1h1lz5";
     })
 }:
@@ -10,15 +10,24 @@
   withHoogle = false;
 
   packages = {
-    cardanomixer-frontend = ../Cardano-Mixer-Frontend;
+    cardanomixer-frontend-nix = ../Cardano-Mixer-Frontend;
 };
   overrides = let
     servantReflexSrc = builtins.fetchGit {
       url = "https://github.com/s9gf4ult/servant-reflex.git" ;
-      rev = "0ea5b145f189ee6b9fa56b4b98009f1df8f29490" ;
-      ref = "uverb-stuff" ;
+      rev = "20e2621cc2eca5fe38f8a01c7a159b0b9be524ea" ;
     } ;
-
+    reflexDomContribSrc = builtins.fetchGit {
+      url = "https://github.com/reflex-frp/reflex-dom-contrib.git";
+      rev = "11db20865fd275362be9ea099ef88ded425789e7";
+    };
+    cardanoMixerLibSrc = pkgs.fetchFromGitHub {
+      owner = "cardmix";
+      repo  = "Cardano-Mixer-Lib";
+      rev = "77e2fb6ff0ade9834699dc176400426c02dd8be4";
+      sha256 = "15b5gj448cbzd651ilf748pwr8a76mshs3dgfz3g1pss4nm67804";
+    };
+    
   in self: super: with pkgs.haskell.lib; {
     servant-openapi3 = super.callHackage "servant-openapi3" "2.0.1.1" {};
     deriving-aeson = super.callHackage "deriving-aeson" "0.2.3" {};
@@ -37,6 +46,7 @@
     optics-th = super.callHackage "optics-th" "0.2" {};
     quickcheck-instances = doJailbreak super.quickcheck-instances;
     reflex-dom-core = dontCheck super.reflex-dom-core;
+    reflex-dom-contrib = doJailbreak (super.callCabal2nix "reflex-dom-contrib" reflexDomContribSrc { });
     servant = doJailbreak (super.callHackage "servant" "0.18.2" {});
     servant-reflex = doJailbreak (super.callCabal2nix "servant-reflex" servantReflexSrc {});
     sop-core = super.callHackage "sop-core" "0.5.0.1" {};
@@ -54,8 +64,8 @@
   };
 
   shells = {
-    ghc = ["cardanomixer-frontend"];
-    ghcjs = ["cardanomixer-frontend"];
+    ghc = ["cardanomixer-frontend-nix"];
+    ghcjs = ["cardanomixer-frontend-nix"];
   };
 })
 
