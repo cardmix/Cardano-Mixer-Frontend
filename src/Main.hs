@@ -18,29 +18,22 @@ headWidget = do
   meta $ "content" =: "Cardano Mixer DApp" <> "property" =: "twitter:title"
   meta $ "content" =: "width=device-width, initial-scale=1" <>
     "name" =: "viewport"
-  stylesheet "css/normalize.css"
-  stylesheet "css/webflow.css"
-  stylesheet "css/cardanomixer-design-b1546-9b66de9866e02.webflow.css"
+  stylesheet "/css/normalize.css"
+  stylesheet "/css/webflow.css"
+  stylesheet "/css/cardanomixer-design-b1546-9b66de9866e02.webflow.css"
+  eScriptLoaded <- domEvent Load . fst <$> elAttr' "script"
+    ("src" =: "https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"
+      <> "type" =: "text/javascript") blank
+  performEvent_ (runHeadScripts <$ eScriptLoaded)
   elAttr "link" ("rel" =: "stylesheet" <> "media" =: "all" <>
     "href" =: "http://fonts.googleapis.com/css?family=Droid+Serif:400,\
       \400italic,700,700italic%7CCorben:regular%7CFenix:regular") blank
-  elAttr "link" ("href" =: "images/favicon.png" <> "rel" =: "shortcut icon" <>
+  elAttr "link" ("href" =: "/images/favicon.png" <> "rel" =: "shortcut icon" <>
     "type" =: "image/x-icon") blank
-  elAttr "link" ("href" =: "images/webclip.jpg" <> "rel" =: "apple-touch-icon")
+  elAttr "link" ("href" =: "/images/webclip.jpg" <> "rel" =: "apple-touch-icon")
     blank
-  eWebFontLoaded <- domEvent Load . fst <$> elAttr' "script"
-    ("src" =: "https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"
-      <> "type" =: "text/javascript") blank
-  eStaticLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "js/static.js" <> "type" =: "text/javascript") blank
-  eLoaderLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "nami-wallet/src/api/loader.js" <> "type" =: "text/javascript") blank
-  elAttr "script" ("src" =: "js/Nami.js" <> "type" =: "text/javascript") blank
-  elAttr "script" ("src" =: "js/snarkjs.min.js" <> "type" =: "text/javascript") blank
-
-  dWebFontLoaded  <- holdDyn False (True <$ eWebFontLoaded)
-  dStaticLoaded   <- holdDyn False (True <$ eStaticLoaded)
-  dLoaderLoaded   <- holdDyn False (True <$ eLoaderLoaded)
-  let eScriptsLoaded = ffilter (== True) $ updated $ foldl (zipDynWith (&&)) (pure True) [dWebFontLoaded, dStaticLoaded, dLoaderLoaded]
-  performEvent_ (runHeadScripts <$ eScriptsLoaded)
+  elAttr "script" ("src" =: "/js/Nami.js" <> "type" =: "text/javascript") blank
+  elAttr "script" ("src" =: "/js/static.js" <> "type" =: "text/javascript") blank
   where
     meta attr = elAttr "meta" attr blank
     stylesheet href = elAttr "link" ("href" =: href <> "rel" =: "stylesheet"
@@ -48,9 +41,23 @@ headWidget = do
 
 bodyWidget :: MonadWidget t m => m ()
 bodyWidget = do
-  -- navbarWidget
+  navbarWidget
   logoWidget
   appWidget
+  divClass "sectionlogo wf-section" .
+    divClass "maincontainer w-container" . divClass "divblockcentered" $ do
+    elAttr "p" ("class" =: "parwide" <> "align" =: "justify") .
+        elAttr "strong" ("class" =: "bold-text-5") $ text "Notes:"
+    elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $
+      text "1. The test will end in a few hours at 1 am UTC."
+    elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $
+      text "2. We will publish a Medium blog on Monday discussing the test and the subsequent milestones."
+    elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $
+      text "3. Depositing tMIX requires some additional tADA and tMIX."
+    elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $
+      text "4. Withdrawal transactions take 3-5 minutes to be confirmed."
+    elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $
+      text "5. Message \"Withdrawal data is not correct\" usually appears when you try to use the same key twice."
   footerWidget
 
 navbarWidget :: MonadWidget t m => m ()
@@ -66,7 +73,7 @@ navbarWidget = elAttr "div" ("data-animation" =: "default" <>
           , (faqHref, "FAQ", False)
           , (paperHref, "White paper", True)
           , (homeHref, "Home", True) ]
-      elAttr "img" ("src" =: "images/Mainlogo.svg" <> "loading" =: "lazy" <>
+      elAttr "img" ("src" =: "/images/Mainlogo.svg" <> "loading" =: "lazy" <>
         "width" =: "45" <> "alt" =: "" <> "class" =: "imagelightdark") blank
     elAttr "div" ("class" =: "w-nav-overlay" <> "data-wf-ignore" =: "" <>
       "id" =: "w-nav-overlay-0") blank
@@ -86,8 +93,8 @@ logoWidget = divClass "sectionlogo wf-section" .
   divClass "maincontainer w-container" . divClass "divblockcentered" $ do
     elAttr "img" ("src" =: "images/Mainlogo.png" <> "loading" =: "lazy" <>
       "width" =: "278" <> "sizes" =: "(max-width: 479px) 95vw, 278px" <>
-      "srcset" =: "images/Mainlogo-p-500.png 500w, images/Mainlogo-p-800.png\
-        \ 800w, images/Mainlogo.png 1112w" <> "alt" =: "" <>
+      "srcset" =: "/images/Mainlogo-p-500.png 500w, images/Mainlogo-p-800.png\
+        \ 800w, /images/Mainlogo.png 1112w" <> "alt" =: "" <>
       "class" =: "imagelogo") blank
     elClass "h2" "headinglogo" . text $ "protect your privacy in one click"
 
@@ -105,17 +112,17 @@ footerWidget = elAttr "div" ("id" =: "Footer" <>
         , (githubLink, githubImg, False) ]
   where
     tgLink = "http://t.me/cardano_mixer"
-    tgImg = "images/telegram.svg"
+    tgImg = "/images/telegram.svg"
     discordLink = "https://discord.gg/Q3gPP87Tcw"
-    discordImg = "images/discord.svg"
+    discordImg = "/images/discord.svg"
     twitterLink = "https://twitter.com/CardanoMixer"
-    twitterImg = "images/twitter.svg"
+    twitterImg = "/images/twitter.svg"
     ideascaleLink = "https://cardano.ideascale.com/a/dtd/369219-48088"
-    ideascaleImg = "images/IdeaScale.svg"
+    ideascaleImg = "/images/IdeaScale.svg"
     mediumLink = "http://cardmix.medium.com/"
-    mediumImg = "images/Medium.svg"
+    mediumImg = "/images/Medium.svg"
     githubLink = "#"
-    githubImg = "images/GitInDev.svg"
+    githubImg = "/images/GitInDev.svg"
     mkLink (href, img, isActive) = elAttr "a" ("href" =: href <>
       "target" =: "_blank" <>
       "class" =: bool "inactive-link-block w-inline-block" "w-inline-block"

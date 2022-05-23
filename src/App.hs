@@ -12,28 +12,55 @@ import NamiJS as Nami
 import Prelude as P
 import Reflex.Dom
 
-import Reflex.Dom.Contrib.Widgets.ScriptDependent
-
 data FormState = Deposit | Withdraw deriving (Eq, Show)
 
 appWidget :: MonadWidget t m => m ()
 appWidget = divClass "sectionapplication wf-section" .
-  divClass "maincontainer w-container" . divClass "columns-3 w-row" $ do
+  divClass "maincontainer w-container" . divClass "columns-2 w-row" $ do
     mainForm
     readme
   where
     readme = divClass columnClass $ do
-      divClass "divblockmain" . elClass "h2" "headingsection headingsmall" $
+      elClass "h6" "headingsection headingsmall" $
         text "ReadMe"
-      elClass "p" "maintext" $ text readmeText
-    readmeText =
-      "You can deposit «these» tokens and «these» amounts. \
-      \To deposit you should first connect to the wallet. \
-      \«These» wallets are accepted. When deposit don’t forget to save \
-      \secret key since you need it to withdraw. Wait a bit before withdrawing \
-      \to improve privacy and mine some ada. To withdraw provide a secret key \
-      \corresponding to a deposit and also an wallet address. You can autofil \
-      \the withdraw address by connecting to the wallet."
+      elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $ do
+        text "See this "
+        elAttr "a" ("href" =: "https://cardmix.medium.com/public-test-1-details-efbf4e3264cb" <> "class" =: "link" 
+          <> "target" =: "_blank") $ text "Medium"
+        text " post for a complete Public Test guide."
+      elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $ do
+        text "To get some tADA, use the following "
+        elAttr "a" ("href" =: "https://testnets.cardano.org/en/testnets/cardano/tools/faucet/" <> "class" =: "link" 
+          <> "target" =: "_blank") $ text "link"
+        text ". To get tMIX, send 2 tADA to the following address: "
+        divClass "divcalculatorwrapper" . elAttr "strong" ("class" =: "bold-text-5") $ text
+          "addr_test1qrh8caw4kmlkwydwzdehpyw905dg8ayjv0vpe6vqmkkk\
+          \5q3psddwydp9ea0gj3jawxyak3d238jpj9fxx3gnfhk7paxqnw2xmw"
+        text "This version works only with " 
+        elAttr "a" ("href" =: "https://namiwallet.io/" <> "class" =: "link" 
+          <> "target" =: "_blank") $ text "Nami"
+        text " wallet."
+        -- , but we will support more wallets in the future."
+      elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $ do
+        text
+          "The deposit Secret Key is automatically saved into your default Downloads folder. \
+          \ You could give the Secret Key to someone else or use the Key yourself (e.g., with another wallet). \
+          \ Waiting before withdrawing improves your privacy."
+      elAttr "p" ("class" =: "parwide" <> "align" =: "justify") $ do
+        text
+          "Please, fill out the "
+        elAttr "a" ("href" =: "https://forms.gle/dfXjh4DqY16mKz4X7" <> "class" =: "link" 
+          <> "target" =: "_blank") $ text "feedback form"
+        text 
+          " to help us improve the app. \
+          \ If you are an ISPO participant, you can earn some extra MIX tokens by doing this."
+        
+
+      -- "This test version allows sending tADA and tMIX privately on the Cardano Testnet. \
+      -- \ To get tADA, use the following link https://testnets.cardano.org/en/testnets/cardano/tools/faucet/. \
+      -- \ To get tMIX, send 2 tADA to the following address \
+      -- \ addr_test1qrh8caw4kmlkwydwzdehpyw905dg8ayjv0vpe6vqmkkk5q3psddwydp9ea0gj3jawxyak3d238jpj9fxx3gnfhk7paxqnw2xmw . \
+      
 
 columnClass :: Text
 columnClass = "w-col w-col-6 w-col-medium-6 w-col-small-small-stack"
@@ -42,9 +69,8 @@ mainForm :: MonadWidget t m => m ()
 mainForm = divClass columnClass . divClass "divblockcentered" .
   divClass "columns-4 w-row" $ mdo
     dFormState <- holdDyn Deposit $ leftmost [eDeposit, eWithdraw]
-    ePb <- getPostBuild
-    eNamiLoaded <- updated <$> widgetHoldUntilDefined "namiIsEnabled" ("js/Nami.js" <$ ePb) blank blank
-    performEvent_ (Nami.isEnabled elemId <$ eNamiLoaded)
+    ePb <- getPostBuild >>= delay 0.5
+    performEvent_ (Nami.isEnabled elemId <$ ePb)
     dWalletConnected <- fmap (fmap parseConnected . value) $ inputElement $ def
       & initialAttributes .~ ("style" =: "display:none;" <> "id" =: elemId)
       & inputElementConfig_initialValue .~ "false"
@@ -54,7 +80,7 @@ mainForm = divClass columnClass . divClass "divblockcentered" .
         Deposit -> depositForm dWalletConnected
         Withdraw -> withdrawForm >> return never
       switchHold never eeConnect
-    performEvent_ (Nami.enable elemId <$ eConnect)    
+    performEvent_ (Nami.enable elemId <$ eConnect)
     eWithdraw <- buttonSwitch Withdraw dFormState
     blank
   where

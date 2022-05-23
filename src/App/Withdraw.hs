@@ -31,9 +31,8 @@ withdrawForm = do
         btnAttrsDisabled = "class" =: "button w-button please-wait" <>
           "disabled" =: ""
         btnHidden = "style" =: "display: none;"
-        mkDepositEvent (Just (t, n)) = Just $ DepositFound t n
+        mkDepositEvent (Just (n, txt)) = Just $ DepositFound n txt
         mkDepositEvent _ = Just DepositNotFound
-        mkDepositAttrs (Just FindInProgress)     = btnAttrsDisabled
         mkDepositAttrs (Just (DepositFound _ _)) = btnHidden
         mkDepositAttrs (Just WithdrawInProgress) = btnHidden
         mkDepositAttrs _ = btnAttrs
@@ -41,8 +40,7 @@ withdrawForm = do
         mkWithdrawAttrs (Just WithdrawInProgress) = btnAttrsDisabled
         mkWithdrawAttrs _ = btnHidden
       dWithdrawState <- holdDyn Nothing $ leftmost
-        [ Just FindInProgress <$ eDeposit
-        , mkDepositEvent <$> eFindDeposit
+        [ mkDepositEvent <$> eFindDeposit
         , Just WithdrawInProgress <$ eWithdraw
         , Just WithdrawOk <$ ffilter id eWithdrawRes
         , Just WithdrawError <$ ffilter not eWithdrawRes ]
@@ -64,8 +62,8 @@ withdrawForm = do
       FindInProgress -> "Searching for the deposit..."
       DepositNotFound -> "No deposit corresponding to this secret key."
       DepositFound t n -> toText n <> " " <> toText t <> " is found"
-      WithdrawInProgress -> "Computing proof of knowledge..."
-      WithdrawOk -> "Withdrawal request has been sent!"
+      WithdrawInProgress -> "Preparing withdrawal request..."
+      WithdrawOk -> "Withdrawal has been confirmed!"
       WithdrawError -> "Withdrawal data is not correct."
     addrHint = "The recipient's wallet address in bech32 format, e.g. addr_test1abc123..."
     keyHint  = "A Secret Key that was generated during a deposit."
@@ -78,14 +76,8 @@ addressInput = divClass "w-row" $ mdo
       "id" =: elemId <> "maxlength" =: "256" <>
       "placeholder" =: "Please, enter a wallet address")
   eBtn <- divClass "column-4 w-col w-col-3" do
-    (e, _) <- elDynAttr' "a" (mkAutofillAttrs <$> dAutofillComplete) $ text "Autofill"
+    (e, _) <- elAttr' "a" ("class" =: "buttonautofil w-button" <>
+      "style" =: "cursor:pointer;") $ text "Autofill"
     return (domEvent Click e)
   performEvent_ (autofillAddr elemId <$ eBtn)
-  let dAddr = value inp
-      btnAttrs = "class" =: "buttonautofil w-button" <> "style" =: "cursor:pointer;"
-      btnAttrsDisabled = "class" =: "buttonautofil w-button please-wait" <>
-          "disabled" =: ""
-      mkAutofillAttrs b = if b then btnAttrs else btnAttrsDisabled
-  dAutofillComplete <- holdDyn True $ leftmost [False <$ eBtn, True <$ updated dAddr]
-  
-  return dAddr
+  return $ value inp
