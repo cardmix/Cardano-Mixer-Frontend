@@ -2,6 +2,8 @@ cabal-version:       2.4
 
 name:                cardanomixer-frontend
 version:             0.1.0.0
+license:             Apache-2.0
+license-files:       LICENSE
 build-type:          Simple
 
 author:              Catherine Galkina
