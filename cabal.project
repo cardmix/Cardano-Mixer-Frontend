@@ -1,5 +1,4 @@
 packages: .
-	  cabal/
 
 flags: +frontend
   
@@ -7,4 +6,8 @@ source-repository-package
   type: git
   location: https://github.com/cardmix/Cardano-Mixer-Lib.git
   tag: a15c0d459ae0eef971bfadb670503915c9394b6a
-  
+
+source-repository-package
+  type: git
+  location: https://github.com/imalsogreg/servant-reflex.git
+  tag: a6f859e52857e0eda753cf113fabfff61f06da6a

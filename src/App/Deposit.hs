@@ -5,9 +5,9 @@ import           Data.Bool              (bool)
 import           Data.Functor           ((<&>))
 import           Data.List              (elemIndex)
 import           Data.Text              (Text, pack, unpack)
-import           Data.Witherable        (catMaybes)
 import           Reflex.Dom
 import           Text.Read              (readMaybe)
+import           Witherable             (catMaybes)
 
 import           App.Common
 import           Backend

@@ -14,10 +14,10 @@ import           Data.Text.Encoding   (encodeUtf8)
 import           Data.Tuple.Extra     (snd3, thd3)
 import           Data.Tuple.Select
 import           Data.UUID            (nil)
-import           Data.Witherable
 import           GHC.Generics         (Generic)
 import           Reflex.Dom           hiding (Value)
 import           Servant.Reflex       (BaseUrl(..))
+import           Witherable
 
 import           Client
 import           Crypto

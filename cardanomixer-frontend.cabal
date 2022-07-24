@@ -1,0 +1,86 @@
+cabal-version:       2.4
+
+name:                cardanomixer-frontend
+version:             0.1.0.0
+license:             Apache-2.0
+license-files:       LICENSE
+build-type:          Simple
+
+author:              Catherine Galkina
+                     Vladimir Sinyakov
+maintainer:          catherine.galkina@gmail.com
+                     devteam@cardmix.io
+
+executable cardanomixer
+  main-is:             Main.hs
+  hs-source-dirs:      src
+
+  default-language:   Haskell2010
+  ghc-options:        -Wall -Wno-unrecognised-pragmas
+
+  if impl(ghcjs)
+    ghc-options:      -dedupe
+
+  other-modules:      App
+                    , App.Common
+                    , App.Deposit
+                    , App.Withdraw
+                    , Backend
+                    , Client
+                    , JS
+                    , NamiJS
+                    , Reflex.ScriptDependent
+
+  build-depends:      base >=4.7
+                    , aeson
+                    , bytestring
+                    , cardano-mixer-common
+                    , containers
+                    , extra
+                    , ghcjs-dom
+                    , http-api-data
+                    , jsaddle
+                    , random
+                    , reflex-dom
+                    , servant
+                    , servant-reflex
+                    , stm
+                    , text
+                    , time
+                    , tuple
+                    , uuid
+                    , witherable
+  if impl(ghcjs)
+    build-depends: ghcjs-base
+
+
+  default-extensions: AllowAmbiguousTypes
+                    , BangPatterns
+                    , BlockArguments
+                    , ConstraintKinds
+                    , DataKinds
+                    , DeriveGeneric
+                    , DerivingStrategies
+                    , DuplicateRecordFields
+                    , FlexibleContexts
+                    , FlexibleInstances
+                    , FunctionalDependencies
+                    , GADTs
+                    , GeneralizedNewtypeDeriving
+                    , LambdaCase
+                    , NamedFieldPuns
+                    , OverloadedLabels
+                    , OverloadedStrings
+                    , PolyKinds
+                    , QuasiQuotes
+                    , RankNTypes
+                    , RecordWildCards
+                    , RecursiveDo
+                    , ScopedTypeVariables
+                    , TemplateHaskell
+                    , TupleSections
+                    , TypeApplications
+                    , TypeFamilies
+                    , TypeOperators
+                    , UndecidableInstances
+                    , ViewPatterns

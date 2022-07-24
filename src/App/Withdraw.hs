@@ -1,12 +1,12 @@
 module App.Withdraw where
 
-import           Data.Functor  ((<&>))
-import           Data.Text     (Text)
+import           Data.Functor        ((<&>))
+import           Data.Text           (Text)
 import           Reflex.Dom
 
 import           App.Common
-import           Backend
-import           JS            (autofillAddr)
+import           Backend             (Token, findDeposit, runWithdraw)
+import           JS                  (autofillAddr)
 
 data WithdrawState
   = FindInProgress | DepositNotFound | DepositFound Token Integer | WithdrawInProgress

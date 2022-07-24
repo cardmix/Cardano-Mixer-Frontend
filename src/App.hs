@@ -6,12 +6,12 @@ import           Data.List               (intersperse)
 import           Data.Text               (Text, toLower)
 import qualified Data.Text
 import           Reflex.Dom
-import           Reflex.Dom.Contrib.Widgets.ScriptDependent
 
 import           App.Common              (toText)
 import           App.Deposit             (depositForm)
 import           App.Withdraw            (withdrawForm)
 import           NamiJS                  as Nami
+import           Reflex.ScriptDependent
 
 data FormState = Deposit | Withdraw deriving (Eq, Show)
 
