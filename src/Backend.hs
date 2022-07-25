@@ -21,12 +21,11 @@ import           Witherable
 
 import           Client
 import           Crypto
-import           JS
+import qualified JS                   
 import           MixerContractParams
 import           MixerProofs          (computeWithdrawWires)
 import           MixerState           (MixerState, getMerkleLeafNumber)
 import           MixerUserData
-import           NamiJS               as Nami
 
 data DepositState = DepositInitial | DepositInProgress | DepositSuccess | DepositFailure deriving Eq
 
@@ -61,44 +60,22 @@ defCID = ContractInstanceId nil
 
 runDeposit :: MonadWidget t m => Text -> Dynamic t DepositSecret -> Dynamic t (Token, Integer) ->
   Event t () -> m (Event t DepositState)
-runDeposit elId dKey dReq eDeposit = do
-  let client@ApiClient{..} = mkApiClient pabIP
-
+runDeposit elId _ _ eDeposit = do
   -- Update wallet address
-  performEvent_ (autofillAddr elemId <$ eDeposit)
+  performEvent_ (JS.autofillAddr elemId <$ eDeposit)
   dAddr <- fmap value $ inputElement $ def & initialAttributes .~ "style" =: "display:none;" <> "id" =: elemId
 
-  -- Connect to PAB
-  dRespConnect <- connectToPAB client dAddr $ () <$ updated dAddr
-  let dPABWallet = fmap (Just . thd3) dRespConnect
+  -- Balance transaction and send it to the browser extension wallet
+  let scAddr = ""
+      val    = [("162ce9d46a21900149027edf2f6ace391d6d1db9450b3c479b857ada", "4964696f74636f696e", "1")]
+      key    = pack . show $ fromZp (toZp 896294618941908241908250129 :: Fr)
+      dp     = JS.DepositParams scAddr "100000000" val key
+  eRunDeposit <- performEvent (JS.runDeposit elId elemIdTx <$> (dp <$ updated dAddr))
 
-  -- Deposit
-  aRespDeposit <- activateRequest (fmap Right (ContractActivationArgs (FrontendContracts MixerUse) <$> dPABWallet))
-    (() <$ updated dRespConnect)
-  let aRespDeposit' = catMaybes $ makeResponse <$> aRespDeposit
-  cidMixerUse <- fmap Right <$> holdDyn defCID aRespDeposit'
-  eRespDeposit <- endpointRequest cidMixerUse (pure . pure $ "deposit") (mkDepositParams <$> dKey <*> dAddr <*> dReq) (() <$ updated cidMixerUse)
-  let eRespDeposit' = catMaybes $ makeResponse <$> eRespDeposit
-  sRespDeposit' <- fmap getTxUnsignedCW <$> getStatus client 30 cidMixerUse eRespDeposit'
-  performEvent_ (Nami.runDeposit elId elemIdTx <$> sRespDeposit')
-
-  dTx <- fmap value $ inputElement $ def & initialAttributes .~ "style" =: "display:none;" <> "id" =: elemIdTx
-  -- Catching signing failure event
-  let eSigningFailure = ffilter (== "") $ updated dTx
-      eSingingSuccess = ffilter (/= "") $ updated dTx
-
-  -- Deposit submit
-  aRespReturn <- activateRequest (fmap Right (ContractActivationArgs (FrontendContracts MixerUse) <$> dPABWallet)) (() <$ eSingingSuccess)
-  let aRespReturn' = catMaybes $ makeResponse <$> aRespReturn
-  cidMixerReturn <- fmap Right <$> holdDyn defCID aRespReturn'
-  eRespReturn <- endpointRequest cidMixerReturn (pure . pure $ "deposit-submit") (Right . JSON.toJSON <$> dTx) (() <$ updated cidMixerReturn)
-
-  -- eNoResponse <- delay 120 eDeposit
-  return $ leftmost [DepositSuccess <$ eRespReturn, DepositFailure <$ eSigningFailure]
+  return $ leftmost [DepositSuccess <$ eRunDeposit, DepositFailure <$ eRunDeposit]
   where
     elemId = "deposit-addr-elem"
     elemIdTx = "tx-signed-elem"
-    mkDepositParams key addr (token, amount) = Right $ JSON.toJSON $ DepositParams addr (toValue token amount) (mimcHash (getR1 key) (getR2 key))
 
 findDeposit :: MonadWidget t m => Dynamic t Text -> Dynamic t Text
   -> Event t () -> m (Event t (Maybe (Token, Integer)))
@@ -114,7 +91,7 @@ findDeposit _ dKey e = do
   eMixerStates <- getMixerStates client allDepositValues e
   let eFindDepositRes = findWithdrawPure <$> attachPromptlyDyn dLeaf eMixerStates
 
-  performEvent_ $ fmap (logInfo . pack . show) eFindDepositRes
+  performEvent_ $ fmap (JS.logInfo . pack . show) eFindDepositRes
 
   -- eNoResponse <- delay 160 e
   return $ leftmost [fmap (fmap ((!!) allDepositOptions . fst)) eFindDepositRes]
@@ -155,7 +132,7 @@ runWithdraw dAddr dKey e = do
   let dSubsMap    = fmap toInputMap dSubsIns
       eProveStart = attachPromptlyDynWith const dSubsMap $ updated dMixerState
 
-  performEvent_ (fillProof elemId <$> eProveStart)
+  performEvent_ (JS.fillProof elemId <$> eProveStart)
   dProofText <- fmap value $ inputElement $ def
     & initialAttributes .~ "style" =: "display:none;" <> "id" =: elemId
   let dProof = fmap (unProofJS . fromMaybe (ProofJS $ Proof O O O) . decode . fromStrict . encodeUtf8) dProofText
@@ -205,8 +182,8 @@ getMixerStates client@ApiClient{..} vals e = do
 
 getStatus :: forall a t m . (MonadWidget t m, FromJSON a) => ApiClient t m -> Integer -> DynReqBody t ContractInstanceId -> Event t () -> m (Event t a)
 getStatus ApiClient{..} i d e = do
-  performEvent_ $ logInfo (pack $ show i) <$ e
-  performEvent_ $ fmap (logInfo . pack . show) e
+  performEvent_ $ JS.logInfo (pack $ show i) <$ e
+  performEvent_ $ fmap (JS.logInfo . pack . show) e
   sResp <- statusRequest d e
   let sResp' = fmap ((fromJSONValue :: JSON.Value -> Maybe a) . observableState . cicCurrentState) $
         catMaybes $ makeResponse <$> sResp
@@ -220,10 +197,10 @@ fromJSONValue v = case fromJSON v of
   Success a -> Just a
   _         -> Nothing
 
-toInputMap :: [Fr] -> WithdrawInputMap
+toInputMap :: [Fr] -> JS.WithdrawInputMap
 toInputMap ins
-  | length ins /= 32 = WithdrawInputMap "" "" "" "" "" "" "" "" "" [] [] "" "" ""
-  | otherwise        = WithdrawInputMap root a h hA curPos oh nh r1 r2
+  | length ins /= 32 = JS.WithdrawInputMap "" "" "" "" "" "" "" "" "" [] [] "" "" ""
+  | otherwise        = JS.WithdrawInputMap root a h hA curPos oh nh r1 r2
       [o1, o2, o3, o4, o5, o6, o7, o8, o9, o10] [l1, l2, l3, l4, l5, l6, l7, l8, l9, l10] v1 v2 v3
   where [root, a, h, hA, curPos, oh, nh, r1, r2,
           o1, o2, o3, o4, o5, o6, o7, o8, o9, o10,

@@ -10,7 +10,7 @@ import           Reflex.Dom
 import           App.Common              (toText)
 import           App.Deposit             (depositForm)
 import           App.Withdraw            (withdrawForm)
-import           NamiJS                  as Nami
+import qualified JS
 import           Reflex.ScriptDependent
 
 data FormState = Deposit | Withdraw deriving (Eq, Show)
@@ -64,8 +64,8 @@ mainForm = divClass columnClass . divClass "divblockcentered" .
   divClass "columns-4 w-row" $ mdo
     dFormState <- holdDyn Deposit $ leftmost [eDeposit, eWithdraw]
     ePb <- getPostBuild
-    eNamiLoaded <- updated <$> widgetHoldUntilDefined "namiIsEnabled" ("js/Nami.js" <$ ePb) blank blank
-    performEvent_ (Nami.isEnabled elemId <$ eNamiLoaded)
+    eNamiLoaded <- updated <$> widgetHoldUntilDefined "namiIsEnabled" ("js/static.js" <$ ePb) blank blank
+    performEvent_ (JS.isEnabled elemId <$ eNamiLoaded)
     dWalletConnected <- fmap (fmap parseConnected . value) $ inputElement $ def
       & initialAttributes .~ ("style" =: "display:none;" <> "id" =: elemId)
       & inputElementConfig_initialValue .~ "false"
@@ -75,7 +75,7 @@ mainForm = divClass columnClass . divClass "divblockcentered" .
         Deposit -> depositForm dWalletConnected
         Withdraw -> withdrawForm >> return never
       switchHold never eeConnect
-    performEvent_ (Nami.enable elemId <$ eConnect)
+    performEvent_ (JS.enable elemId <$ eConnect)
     eWithdraw <- buttonSwitch Withdraw dFormState
     blank
   where

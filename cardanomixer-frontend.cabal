@@ -28,7 +28,9 @@ executable cardanomixer
                     , Backend
                     , Client
                     , JS
-                    , NamiJS
+                    , JS.App
+                    , JS.Types
+                    , JS.WebPage
                     , Reflex.ScriptDependent
 
   build-depends:      base >=4.7

@@ -12,7 +12,7 @@ import           Witherable             (catMaybes)
 import           App.Common
 import           Backend
 import           Crypto                 (Zp(..))
-import           JS                     (copyElemContent, saveTextFile)
+import qualified JS
 import           MixerUserData          (DepositSecret(..), generateDepositSecret)
 
 data ButtonState = ButtonConnect | ButtonDeposit deriving Eq
@@ -96,7 +96,7 @@ secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
     (e, _) <- elDynAttr' "a" copyBtnAttrs $ elAttr "img"
       ("src" =: "images/PictCopy.svg" <> "loading" =: "lazy" <>
         "width" =: "23" <> "class" =: "pictcopy") blank
-    performEvent_ (copyElemContent keyId <$ domEvent Click e)
+    performEvent_ (JS.copyElemContent keyId <$ domEvent Click e)
   return dKey
   where
     colCls11 = "w-col w-col-11 w-col-small-11 w-col-tiny-11"

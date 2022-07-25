@@ -4,7 +4,7 @@ import           Data.Bool          (bool)
 import           Reflex.Dom
 
 import           App                (appWidget)
-import           JS                 (runHeadScripts)
+import qualified JS                 
 
 main :: IO ()
 main = mainWidgetWithHead headWidget bodyWidget
@@ -34,14 +34,13 @@ headWidget = do
       <> "type" =: "text/javascript") blank
   eStaticLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "js/static.js" <> "type" =: "text/javascript") blank
   eLoaderLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "nami-wallet/src/api/loader.js" <> "type" =: "text/javascript") blank
-  elAttr "script" ("src" =: "js/Nami.js" <> "type" =: "text/javascript") blank
   elAttr "script" ("src" =: "js/snarkjs.min.js" <> "type" =: "text/javascript") blank
 
   dWebFontLoaded  <- holdDyn False (True <$ eWebFontLoaded)
   dStaticLoaded   <- holdDyn False (True <$ eStaticLoaded)
   dLoaderLoaded   <- holdDyn False (True <$ eLoaderLoaded)
   let eScriptsLoaded = ffilter (== True) $ updated $ foldl (zipDynWith (&&)) (pure True) [dWebFontLoaded, dStaticLoaded, dLoaderLoaded]
-  performEvent_ (runHeadScripts <$ eScriptsLoaded)
+  performEvent_ (JS.runHeadScripts <$ eScriptsLoaded)
   where
     meta attr = elAttr "meta" attr blank
     stylesheet href = elAttr "link" ("href" =: href <> "rel" =: "stylesheet"

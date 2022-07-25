@@ -6,7 +6,7 @@ import           Reflex.Dom
 
 import           App.Common
 import           Backend             (Token, findDeposit, runWithdraw)
-import           JS                  (autofillAddr)
+import qualified JS
 
 data WithdrawState
   = FindInProgress | DepositNotFound | DepositFound Token Integer | WithdrawInProgress
@@ -80,5 +80,5 @@ addressInput = divClass "w-row" $ mdo
     (e, _) <- elAttr' "a" ("class" =: "buttonautofil w-button" <>
       "style" =: "cursor:pointer;") $ text "Autofill"
     return (domEvent Click e)
-  performEvent_ (autofillAddr elemId <$ eBtn)
+  performEvent_ (JS.autofillAddr elemId <$ eBtn)
   return $ value inp
