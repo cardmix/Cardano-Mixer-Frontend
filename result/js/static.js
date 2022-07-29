@@ -128,11 +128,12 @@ function runDeposit(elId, elTx, dp) {
           const a = CardanoWasm.Assets.new();
           a.insert(CardanoWasm.AssetName.new(fromHexString(dp.dpNonADAValue[i][1])), CardanoWasm.BigNum.from_str(dp.dpNonADAValue[i][2]));
           ma.insert(CardanoWasm.ScriptHash.from_bytes(fromHexString(dp.dpNonADAValue[i][0])), a);
-        }        
+        }
         valueToPay.set_multiasset(ma);
 
         // add inputs from the user's wallet
-        valueToSpend = valueToPay.checked_add(CardanoWasm.Value.new(CardanoWasm.BigNum.from_str('10000000')));
+        valueToSpend = valueToPay.checked_add(CardanoWasm.Value.new(CardanoWasm.BigNum.from_str('10000000'))); // adding fee estimate
+        console.log(valueToSpend.coin().to_str());
         api.getUtxos(toHexString(valueToSpend.to_bytes()), undefined).
           then((res) => {
             for (i=0; i < res.length; i++)
@@ -146,49 +147,49 @@ function runDeposit(elId, elTx, dp) {
                 utxoOut.amount()
               );      
             };
-        }, (res) => { console.log(res) });
+            
+            // creating utxo datum
+            const datum = CardanoWasm.PlutusData.new_integer(CardanoWasm.BigInt.from_str(dp.dpKey)); // here goes the user-generated key
 
-        // creating utxo datum
-        const datum = CardanoWasm.PlutusData.new_integer(CardanoWasm.BigInt.from_str(dp.dpKey)); // here goes the user-generated key
+            // add output to the tx
+            const scriptAddress = CardanoWasm.Address.from_bech32(dp.dpAddress);
+            scriptOutput = CardanoWasm.TransactionOutput.new(scriptAddress, valueToPay);
+            scriptOutput.set_data_hash(CardanoWasm.hash_plutus_data(datum));
+            txBuilder.add_output(scriptOutput);
+            
+            // calculate the min fee required and send any change to an address
+            api.getChangeAddress().
+            then((res) => {
+              const changeAddress = CardanoWasm.Address.from_bytes(fromHexString(res));
+              txBuilder.add_change_if_needed(changeAddress);
 
-        // add output to the tx
-        const scriptAddress = CardanoWasm.Address.from_bech32(dp.dpAddress);
-        scriptOutput = CardanoWasm.TransactionOutput.new(scriptAddress, valueToPay);
-        scriptOutput.set_data_hash(CardanoWasm.hash_plutus_data(datum));
-        txBuilder.add_output(scriptOutput);
+              // once the transaction is ready, we build it to get the tx body without witnesses
+              const txBody = txBuilder.build();
+              const txHash = CardanoWasm.hash_transaction(txBody);
+              const witnesses = CardanoWasm.TransactionWitnessSet.new();
 
-        // calculate the min fee required and send any change to an address
-        api.getChangeAddress().
-          then((res) => {
-            const changeAddress = CardanoWasm.Address.from_bytes(fromHexString(res));
-            txBuilder.add_change_if_needed(changeAddress);
-          }, (res) => { console.log(res) });
+              // create the finalized transaction with witnesses
+              const partialTx = CardanoWasm.Transaction.new(
+                txBody,
+                witnesses,
+                undefined, // transaction metadata
+              );
+              const partialTx_hex = toHexString(partialTx.to_bytes());
 
-        // once the transaction is ready, we build it to get the tx body without witnesses
-        const txBody = txBuilder.build();
-        const txHash = CardanoWasm.hash_transaction(txBody);
-        const witnesses = CardanoWasm.TransactionWitnessSet.new();
-
-        // create the finalized transaction with witnesses
-        const partialTx = CardanoWasm.Transaction.new(
-          txBody,
-          witnesses,
-          undefined, // transaction metadata
-        );
-        const partialTx_hex = toHexString(partialTx.to_bytes());
-
-        setInputValue(elTx, "");
-        api.signTx(partialTx_hex, true).
-          then((res) => {
-            const txVkeyWitnesses = CardanoWasm.TransactionWitnessSet.from_bytes(fromHexString(res));
-            const readyToSubmit = CardanoWasm.Transaction.new(txBody, txVkeyWitnesses);
-            const finalTx = toHexString(readyToSubmit.to_bytes());
-            api.submitTx(finalTx).
-              then((res) => {
-                setInputValue(elTx, res);
-                console.log(res);
+              setInputValue(elTx, "");
+              api.signTx(partialTx_hex, true).
+                then((res) => {
+                  const txVkeyWitnesses = CardanoWasm.TransactionWitnessSet.from_bytes(fromHexString(res));
+                  const readyToSubmit = CardanoWasm.Transaction.new(txBody, txVkeyWitnesses);
+                  const finalTx = toHexString(readyToSubmit.to_bytes());
+                  api.submitTx(finalTx).
+                    then((res) => {
+                      setInputValue(elTx, res);
+                      console.log(res);
+                    }, (res) => { console.log(res); });
               }, (res) => { console.log(res); });
-        }, (res) => { console.log(res); });
+            }, (res) => { console.log(res) });
+        }, (res) => { console.log(res) });
       }, (res) => { console.log(res); });
     }, (res) => { console.log(res); });
 };

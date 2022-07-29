@@ -88,12 +88,12 @@ runDeposit = const . const . const $ error "GHCJS is required!"
 foreign import javascript unsafe
   "fillProof($1, $2);" fillProof_js :: JSVal -> JSVal -> IO ()
 
-fillProof :: MonadIO m => Text -> WithdrawInputMap -> m ()
+fillProof :: MonadIO m => Text -> Text -> m ()
 fillProof elId wIM  = liftIO $ do
   wIM_js <- toJSVal wIM
   elId_js <- toJSVal elId
   fillProof_js elId_js wIM_js
 #else
-fillProof :: MonadIO m => Text -> WithdrawInputMap -> m ()
+fillProof :: MonadIO m => Text -> Text -> m ()
 fillProof _ _ = liftIO $ error "GHCJS is required!"
 #endif

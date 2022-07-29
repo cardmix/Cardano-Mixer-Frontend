@@ -11,9 +11,8 @@ import           Witherable             (catMaybes)
 
 import           App.Common
 import           Backend
-import           Crypto                 (Zp(..))
+import           Crypto                 (Zp(..), Fr, generateZp)
 import qualified JS
-import           MixerUserData          (DepositSecret(..), generateDepositSecret)
 
 data ButtonState = ButtonConnect | ButtonDeposit deriving Eq
 
@@ -50,7 +49,7 @@ depositForm dWalletConnected = do
       eDeposit = ffilter (== ButtonDeposit) eBtn
       depositArgs = zipDyn dToken dAmount
     eTxConstructed <- runDeposit elId key depositArgs (() <$ eDeposit)
-    return $ (() <$ eConnect, dDepositState)
+    return (() <$ eConnect, dDepositState)
   dyn_ $ dState <&> (elAttr "div" ("class" =: "text-block-2" <> "id" =: elId) . text . ppState)
   return eConn
   where
@@ -72,10 +71,10 @@ depositForm dWalletConnected = do
       "A copy of the Secret Key is automatically saved in your default Downloads folder."
 
 -- Secret Key element
-secretKeyInput :: MonadWidget t m => Event t () -> m (Dynamic t DepositSecret)
+secretKeyInput :: MonadWidget t m => Event t () -> m (Dynamic t Fr)
 secretKeyInput eDeposit = divClass "secretekeywrapper" . divClass "w-row" $ do
-  eKey <- performEvent (liftIO generateDepositSecret <$ eDeposit)
-  dKey <- holdDyn (DepositSecret (Zp 0) (Zp 0)) eKey
+  eKey <- performEvent (liftIO generateZp <$ eDeposit)
+  dKey <- holdDyn (Zp 0) eKey
   performEvent_ (fmap (JS.saveTextFile . toText) eKey)
   let keyId = "TextSecretKey"
   divClass colCls11 $ do
