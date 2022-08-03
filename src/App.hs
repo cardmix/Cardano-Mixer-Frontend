@@ -64,18 +64,19 @@ mainForm = divClass columnClass . divClass "divblockcentered" .
   divClass "columns-4 w-row" $ mdo
     dFormState <- holdDyn Deposit $ leftmost [eDeposit, eWithdraw]
     ePb <- getPostBuild
-    eNamiLoaded <- updated <$> widgetHoldUntilDefined "namiIsEnabled" ("js/static.js" <$ ePb) blank blank
-    performEvent_ (JS.isEnabled elemId <$ eNamiLoaded)
+    eCardmixLoaded <- updated <$> widgetHoldUntilDefined "namiEnable" ("js/cardmix.js" <$ ePb) blank blank
+
     dWalletConnected <- fmap (fmap parseConnected . value) $ inputElement $ def
       & initialAttributes .~ ("style" =: "display:none;" <> "id" =: elemId)
       & inputElementConfig_initialValue .~ "false"
+
     eDeposit <- buttonSwitch Deposit dFormState
     eConnect <- divClass colCls8 $ do
       eeConnect <- dyn $ dFormState <&> \case
         Deposit -> depositForm dWalletConnected
         Withdraw -> withdrawForm >> return never
       switchHold never eeConnect
-    performEvent_ (JS.enable elemId <$ eConnect)
+    performEvent_ (JS.enable "nami" elemId <$ leftmost [eCardmixLoaded, eConnect])
     eWithdraw <- buttonSwitch Withdraw dFormState
     blank
   where

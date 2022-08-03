@@ -80,5 +80,5 @@ addressInput = divClass "w-row" $ mdo
     (e, _) <- elAttr' "a" ("class" =: "buttonautofil w-button" <>
       "style" =: "cursor:pointer;") $ text "Autofill"
     return (domEvent Click e)
-  performEvent_ (JS.autofillAddr elemId <$ eBtn)
+  performEvent_ (JS.walletAddress "nami" elemId <$ eBtn)
   return $ value inp

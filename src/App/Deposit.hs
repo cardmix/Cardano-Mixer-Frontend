@@ -60,6 +60,7 @@ depositForm dWalletConnected = do
     ppState = \case
       DepositInitial    -> ""
       DepositInProgress -> "Constructing transaction..."
+      DepositSigning    -> "Confirm transaction in your wallet"
       DepositSuccess    -> "Transaction has been submitted!"
       DepositFailure    -> "Transaction was declined by the user."
     showToken = \case

@@ -1,24 +1,14 @@
 module Client where
 
-import           Data.Aeson                as JSON
-import           Data.Proxy                (Proxy(..))
-import           Data.Text                 (Text)
-import           Reflex.Dom                hiding (Value)
+import           Data.Proxy                   (Proxy(..))
+import           Data.Text                    (Text)
+import           Reflex.Dom                   hiding (Value)
 import           Servant.API
 import           Servant.Reflex
 
+import           MixerAPI                     (API)
 import           MixerProofs.SigmaProtocol
 
--- API
-
-type API
-  = "api" :>
-    (
-         "keys"                                   :> Get  '[JSON] KeysResponse
-    :<|> "withdraw" :> ReqBody '[JSON] WithdrawRequest :> Post '[JSON] ()
-    )
-
--- Client
 
 type RespEvent t a      = Event t (ReqResult () a)
 type Res t m res        = Event t () -> m (RespEvent t res)
@@ -31,8 +21,7 @@ data ApiClient t m = ApiClient
     withdrawRequest :: ReqRes t m WithdrawRequest ()
   }
 
-mkApiClient :: forall t m . MonadWidget t m =>
-  BaseUrl -> ApiClient t m
+mkApiClient :: forall t m . MonadWidget t m => BaseUrl -> ApiClient t m
 mkApiClient host = ApiClient{..}
   where
     (keysRequest :<|> withdrawRequest) = client (Proxy @API) (Proxy @m) (Proxy @()) (pure host)

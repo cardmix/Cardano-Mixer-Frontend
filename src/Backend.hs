@@ -25,7 +25,7 @@ import qualified JS
 import           MixerProofs.Groth16
 import           Utils.Plutus
 
-data DepositState = DepositInitial | DepositInProgress | DepositSuccess | DepositFailure deriving Eq
+data DepositState = DepositInitial | DepositInProgress | DepositSigning | DepositSuccess | DepositFailure deriving Eq
 
 data Token = TokenADA | TokenMIX deriving (Eq, Ord, Bounded, Enum)
 
@@ -57,7 +57,7 @@ runDeposit :: MonadWidget t m => Text -> Dynamic t Fr -> Dynamic t (Token, Integ
   Event t () -> m (Event t DepositState)
 runDeposit elId _ _ eDeposit = do
   -- Update wallet address
-  performEvent_ (JS.autofillAddr elemId <$ eDeposit)
+  performEvent_ (JS.walletAddress "nami" elemId <$ eDeposit)
   dAddr <- fmap value $ inputElement $ def & initialAttributes .~ "style" =: "display:none;" <> "id" =: elemId
 
   -- Balance transaction and send it to the browser extension wallet
@@ -65,7 +65,7 @@ runDeposit elId _ _ eDeposit = do
       val    = [("f21f17dd8a772ada1ead262823a224f1ec9dafad65dc6939cf3c4848", "744d4958", "1")]
       key    = pack . show $ fromZp (toZp 896294618941908241908250129 :: Fr)
       dp     = JS.DepositParams scAddr "5000000" val key
-  eRunDeposit <- performEvent (JS.runDeposit elId elemIdTx <$> (dp <$ updated dAddr))
+  eRunDeposit <- performEvent (flip (JS.runDeposit "nami") elemIdTx <$> (dp <$ updated dAddr))
 
   return $ leftmost [DepositSuccess <$ eRunDeposit, DepositFailure <$ eRunDeposit]
   where
