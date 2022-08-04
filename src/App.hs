@@ -81,7 +81,7 @@ mainForm = divClass columnClass . divClass "divblockcentered" .
     blank
   where
     parseConnected "true" = True
-    parseConnected _ = False
+    parseConnected _      = False
     elemId = "input-is-enabled"
     colCls8 = "w-col w-col-8 w-col-medium-8 w-col-small-8 w-col-tiny-8"
 

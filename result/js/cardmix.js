@@ -72,7 +72,8 @@ function walletAPI(walletName) {
 function walletEnable(walletName, resId) {
   const w = walletAPI(walletName);
   if (typeof w !== 'undefined')
-    w.then(() => { setInputValue(resId, true); });
+    w.then(() => { setInputValue(resId, "true"); }, () => { setInputValue(resId, "error_walletAPI"); });
+  else setInputValue(resId, "error_walletAPI");
 };
 
 function walletAddress(walletName, resId) {
@@ -85,15 +86,16 @@ function walletAddress(walletName, resId) {
           const address = CardanoWasm.Address.from_bytes(fromHexString(res)).to_bech32();
           setInputValue(resId, address);
         });
-      });
+      }, () => { setInputValue(resId, "error_walletAPI"); });
+    else setInputValue(resId, "error_walletAPI");
   });
 };
 
 function runDeposit(walletName, dp, resId) {
-  walletAPI(walletName).
-    then((api) => {
-      return loader.load()
-      .then(() => {
+  const w = walletAPI(walletName);
+  if (typeof w !== 'undefined')
+    w.then((api) => {
+      loader.load().then(() => {
         const CardanoWasm = loader.Cardano;
 
         // instantiate the tx builder with the Cardano protocol parameters
@@ -121,14 +123,10 @@ function runDeposit(walletName, dp, resId) {
 
         // add inputs from the user's wallet
         valueToSpend = valueToPay.checked_add(CardanoWasm.Value.new(CardanoWasm.BigNum.from_str('10000000'))); // adding fee estimate
-        console.log(valueToSpend.coin().to_str());
         api.getUtxos(toHexString(valueToSpend.to_bytes()), undefined).
           then((res) => {
             if (res === null)
-            {
-              console.log("no utxos");
-              return;
-            }
+            { setInputValue(resId, "error_getUtxos"); return; }
 
             for (i=0; i < res.length; i++)
             {
@@ -141,7 +139,7 @@ function runDeposit(walletName, dp, resId) {
                 utxoOut.amount()
               );      
             };
-            
+              
             // creating utxo datum
             const datum = CardanoWasm.PlutusData.new_integer(CardanoWasm.BigInt.from_str(dp.dpKey)); // here goes the user-generated key
 
@@ -150,10 +148,9 @@ function runDeposit(walletName, dp, resId) {
             scriptOutput = CardanoWasm.TransactionOutput.new(scriptAddress, valueToPay);
             scriptOutput.set_data_hash(CardanoWasm.hash_plutus_data(datum));
             txBuilder.add_output(scriptOutput);
-            
+              
             // calculate the min fee required and send any change to an address
-            api.getChangeAddress().
-            then((res) => {
+            api.getChangeAddress().then((res) => {
               const changeAddress = CardanoWasm.Address.from_bytes(fromHexString(res));
               txBuilder.add_change_if_needed(changeAddress);
 
@@ -170,21 +167,19 @@ function runDeposit(walletName, dp, resId) {
               );
               const partialTx_hex = toHexString(partialTx.to_bytes());
 
-              api.signTx(partialTx_hex, true).
-                then((res) => {
-                  const txVkeyWitnesses = CardanoWasm.TransactionWitnessSet.from_bytes(fromHexString(res));
-                  const readyToSubmit = CardanoWasm.Transaction.new(txBody, txVkeyWitnesses);
-                  const finalTx = toHexString(readyToSubmit.to_bytes());
-                  api.submitTx(finalTx).
-                    then((res) => {
-                      setInputValue(resId, res);
-                      console.log(res);
-                    }, (res) => { console.log(res); });
-              }, (res) => { console.log(res); });
-            }, (res) => { console.log(res) });
-        }, (res) => { console.log(res) });
-      }, (res) => { console.log(res); });
-    }, (res) => { console.log(res); });
+              api.signTx(partialTx_hex).then((res) => {
+                const txVkeyWitnesses = CardanoWasm.TransactionWitnessSet.from_bytes(fromHexString(res));
+                const readyToSubmit = CardanoWasm.Transaction.new(txBody, txVkeyWitnesses);
+                const finalTx = toHexString(readyToSubmit.to_bytes());
+                api.submitTx(finalTx).then((res) => {
+                  setInputValue(resId, res);
+                }, () => { setInputValue(resId, "error_submit"); });
+              }, () => { setInputValue(resId, "error_sign"); });
+            });
+        });
+      });
+    }, () => { setInputValue(resId, "error_walletAPI"); });
+  else setInputValue(resId, "error_walletAPI");
 };
 
 async function fillProof(elId, inputs) {
