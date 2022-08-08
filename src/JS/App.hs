@@ -50,6 +50,38 @@ walletAddress = const $ error "GHCJS is required!"
 
 #ifdef __GHCJS__
 foreign import javascript unsafe
+  "walletAddressBech32($1, $2);" walletAddressBech32_js :: JSVal -> JSVal -> IO ()
+
+walletAddressBech32 :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32 walletName resId = liftIO $ do
+  walletName_js <- toJSVal walletName
+  resId_js      <- toJSVal resId
+  walletAddressBech32_js walletName_js resId_js
+#else
+walletAddressBech32 :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32 = const $ error "GHCJS is required!"
+#endif
+
+-----------------------------------------------------------------
+
+#ifdef __GHCJS__
+foreign import javascript unsafe
+  "walletAddressBech32ToBytes($1, $2);" walletAddressBech32ToBytes_js :: JSVal -> JSVal -> IO ()
+
+walletAddressBech32ToBytes :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32ToBytes addrBech32 resId = liftIO $ do
+  addrBech32_js <- toJSVal addrBech32
+  resId_js      <- toJSVal resId
+  walletAddressBech32ToBytes_js addrBech32_js resId_js
+#else
+walletAddressBech32ToBytes :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32ToBytes = const $ error "GHCJS is required!"
+#endif
+
+-----------------------------------------------------------------
+
+#ifdef __GHCJS__
+foreign import javascript unsafe
   "runDeposit($1, $2, $3);"
   runDeposit_js :: JSVal -> JSVal -> JSVal -> IO ()
 

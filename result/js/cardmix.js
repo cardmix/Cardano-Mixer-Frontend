@@ -77,6 +77,14 @@ function walletEnable(walletName, resId) {
 };
 
 function walletAddress(walletName, resId) {
+  const w = walletAPI(walletName);
+  if (typeof w !== 'undefined')
+    w.then((api) => { api.getChangeAddress().then((res) => { setInputValue(resId, res); }); },
+      () => { setInputValue(resId, "error_walletAPI"); });
+    else setInputValue(resId, "error_walletAPI");
+};
+
+function walletAddressBech32(walletName, resId) {
   loader.load().then(() => {
     const CardanoWasm = loader.Cardano;
     const w = walletAPI(walletName);
@@ -85,9 +93,17 @@ function walletAddress(walletName, resId) {
         api.getChangeAddress().then((res) => {
           const address = CardanoWasm.Address.from_bytes(fromHexString(res)).to_bech32();
           setInputValue(resId, address);
-        });
-      }, () => { setInputValue(resId, "error_walletAPI"); });
-    else setInputValue(resId, "error_walletAPI");
+        }, () => { setInputValue(resId, "error_walletAPI"); });
+      });
+      else setInputValue(resId, "error_walletAPI");
+  });
+};
+
+function walletAddressBech32ToBytes(addressBech32, resId) {
+  loader.load().then(() => {
+    const CardanoWasm = loader.Cardano;
+    const address = toHexString(CardanoWasm.Address.from_bech32(addressBech32).to_bytes());
+    setInputValue(resId, address);
   });
 };
 
@@ -126,7 +142,7 @@ function runDeposit(walletName, dp, resId) {
         api.getUtxos(toHexString(valueToSpend.to_bytes()), undefined).
           then((res) => {
             if (res === null)
-            { setInputValue(resId, "error_getUtxos"); return; }
+            { setInputValue(resId, "error_utxos"); return; }
 
             for (i=0; i < res.length; i++)
             {
@@ -141,7 +157,7 @@ function runDeposit(walletName, dp, resId) {
             };
               
             // creating utxo datum
-            const datum = CardanoWasm.PlutusData.new_integer(CardanoWasm.BigInt.from_str(dp.dpKey)); // here goes the user-generated key
+            const datum = CardanoWasm.PlutusData.new_integer(CardanoWasm.BigInt.from_str(dp.dpKey[0])); // here goes the user-generated key
 
             // add output to the tx
             const scriptAddress = CardanoWasm.Address.from_bech32(dp.dpAddress);
@@ -172,7 +188,7 @@ function runDeposit(walletName, dp, resId) {
                 const readyToSubmit = CardanoWasm.Transaction.new(txBody, txVkeyWitnesses);
                 const finalTx = toHexString(readyToSubmit.to_bytes());
                 api.submitTx(finalTx).then((res) => {
-                  setInputValue(resId, res);
+                  setInputValue(resId, dp.dpKey[1]);
                 }, () => { setInputValue(resId, "error_submit"); });
               }, () => { setInputValue(resId, "error_sign"); });
             });
@@ -180,19 +196,6 @@ function runDeposit(walletName, dp, resId) {
       });
     }, () => { setInputValue(resId, "error_walletAPI"); });
   else setInputValue(resId, "error_walletAPI");
-};
-
-async function fillProof(elId, inputs) {
-  console.log(inputs);
-  const { proof, publicSignals } =
-  await snarkjs.groth16.fullProve(inputs, "circuit-mixer.wasm", "circuit_final.zkey");
-
-  setInputValue(elId, JSON.stringify(proof, null, 1));
-
-  var el = document.getElementById(elId);
-  console.log(el.value);
-  console.log(publicSignals);
-  // setInputValue(elId, proof);
 };
 
 // Convert a hex string to a byte array

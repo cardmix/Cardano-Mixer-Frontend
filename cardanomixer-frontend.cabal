@@ -26,6 +26,7 @@ executable cardanomixer
                     , App.Deposit
                     , App.Withdraw
                     , Backend
+                    , Backend.Types
                     , Client
                     , JS
                     , JS.App
@@ -33,9 +34,11 @@ executable cardanomixer
                     , JS.WebPage
                     , Language
                     , Reflex.ScriptDependent
+                    , WebPage.Basic
 
   build-depends:      base >=4.7
                     , aeson
+                    , base16-bytestring
                     , bytestring
                     , cardano-mixer-common
                     , containers
