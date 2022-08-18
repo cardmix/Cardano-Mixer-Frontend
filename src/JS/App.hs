@@ -18,33 +18,15 @@ import           JS.Types
 
 #ifdef __GHCJS__
 foreign import javascript unsafe
-  "(function() {\
-    console.log('isEnabled');\
-    namiIsEnabled($1);\
-  })();"
-  isEnabled_js :: JSVal -> IO ()
+  "walletEnable($1, $2);" enable_js :: JSVal -> JSVal -> IO ()
 
-isEnabled :: MonadIO m => Text -> m ()
-isEnabled txt = liftIO $ toJSVal txt >>= isEnabled_js
+enable :: MonadIO m => Text -> Text -> m ()
+enable walletName resId = liftIO $ do
+  walletName_js <- toJSVal walletName
+  resId_js      <- toJSVal resId
+  enable_js walletName_js resId_js
 #else
-isEnabled :: MonadIO m => Text -> m ()
-isEnabled = const $ error "GHCJS is required!"
-#endif
-
------------------------------------------------------------------
-
-#ifdef __GHCJS__
-foreign import javascript unsafe
-  "(function() {\
-    console.log('enable');\
-    namiEnable($1);\
-  })();"
-  enable_js :: JSVal -> IO ()
-
-enable :: MonadIO m => Text -> m ()
-enable txt = liftIO $ toJSVal txt >>= enable_js
-#else
-enable :: MonadIO m => Text -> m ()
+enable :: MonadIO m => Text -> Text -> m ()
 enable = const $ error "GHCJS is required!"
 #endif
 
@@ -52,33 +34,65 @@ enable = const $ error "GHCJS is required!"
 
 #ifdef __GHCJS__
 foreign import javascript unsafe
-  "autofillAddr($1);" autofillAddr_js :: JSVal -> IO ()
+  "walletAddress($1, $2);" walletAddress_js :: JSVal -> JSVal -> IO ()
 
-autofillAddr :: MonadIO m => Text -> m ()
-autofillAddr txt = liftIO $ toJSVal txt >>= autofillAddr_js
+walletAddress :: MonadIO m => Text -> Text -> m ()
+walletAddress walletName resId = liftIO $ do
+  walletName_js <- toJSVal walletName
+  resId_js      <- toJSVal resId
+  walletAddress_js walletName_js resId_js
 #else
-autofillAddr :: MonadIO m => Text -> m ()
-autofillAddr = const $ error "GHCJS is required!"
+walletAddress :: MonadIO m => Text -> Text -> m ()
+walletAddress = const $ error "GHCJS is required!"
 #endif
 
 -----------------------------------------------------------------
 
 #ifdef __GHCJS__
 foreign import javascript unsafe
-  "(function() {\
-    console.log('runDeposit');\
-    runDeposit($1, $2, $3);\
-  })();"
+  "walletAddressBech32($1, $2);" walletAddressBech32_js :: JSVal -> JSVal -> IO ()
+
+walletAddressBech32 :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32 walletName resId = liftIO $ do
+  walletName_js <- toJSVal walletName
+  resId_js      <- toJSVal resId
+  walletAddressBech32_js walletName_js resId_js
+#else
+walletAddressBech32 :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32 = const $ error "GHCJS is required!"
+#endif
+
+-----------------------------------------------------------------
+
+#ifdef __GHCJS__
+foreign import javascript unsafe
+  "walletAddressBech32ToBytes($1, $2);" walletAddressBech32ToBytes_js :: JSVal -> JSVal -> IO ()
+
+walletAddressBech32ToBytes :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32ToBytes addrBech32 resId = liftIO $ do
+  addrBech32_js <- toJSVal addrBech32
+  resId_js      <- toJSVal resId
+  walletAddressBech32ToBytes_js addrBech32_js resId_js
+#else
+walletAddressBech32ToBytes :: MonadIO m => Text -> Text -> m ()
+walletAddressBech32ToBytes = const $ error "GHCJS is required!"
+#endif
+
+-----------------------------------------------------------------
+
+#ifdef __GHCJS__
+foreign import javascript unsafe
+  "runDeposit($1, $2, $3);"
   runDeposit_js :: JSVal -> JSVal -> JSVal -> IO ()
 
-runDeposit :: MonadIO m => Text -> Text -> DepositParams -> m ()
-runDeposit elId elTx dp = liftIO $ do
-  elId_js <- toJSVal elId
-  elTx_js <- toJSVal elTx
+runDeposit :: MonadIO m => Text -> DepositParams -> Text -> m ()
+runDeposit walletName dp resId = liftIO $ do
+  walletName_js <- toJSVal walletName
   dp_js   <- toJSVal dp
-  runDeposit_js elId_js elTx_js dp_js
+  resId_js      <- toJSVal resId
+  runDeposit_js walletName_js dp_js resId_js
 #else
-runDeposit :: MonadIO m => Text -> Text -> DepositParams -> m ()
+runDeposit :: MonadIO m => Text -> DepositParams -> Text -> m ()
 runDeposit = const . const . const $ error "GHCJS is required!"
 #endif
 
@@ -88,12 +102,12 @@ runDeposit = const . const . const $ error "GHCJS is required!"
 foreign import javascript unsafe
   "fillProof($1, $2);" fillProof_js :: JSVal -> JSVal -> IO ()
 
-fillProof :: MonadIO m => Text -> WithdrawInputMap -> m ()
+fillProof :: MonadIO m => Text -> Text -> m ()
 fillProof elId wIM  = liftIO $ do
   wIM_js <- toJSVal wIM
   elId_js <- toJSVal elId
   fillProof_js elId_js wIM_js
 #else
-fillProof :: MonadIO m => Text -> WithdrawInputMap -> m ()
+fillProof :: MonadIO m => Text -> Text -> m ()
 fillProof _ _ = liftIO $ error "GHCJS is required!"
 #endif

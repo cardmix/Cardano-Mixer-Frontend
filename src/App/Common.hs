@@ -1,19 +1,16 @@
 module App.Common where
 
-import           Control.Monad        (guard)
-import           Data.Text            (Text, pack)
+import           Control.Monad            (guard)
+import qualified Data.ByteString          as BS
+import qualified Data.ByteString.Base16   as BS
+import           Data.Maybe               (isNothing)
+import           Data.Text                (Text, pack)
+import           Data.Text.Encoding       (encodeUtf8)
 import           Reflex.Dom
+import           Witherable               (catMaybes)
 
-inputTitle :: MonadWidget t m => Text -> Text -> m ()
-inputTitle title hint = divClass "w-row" $ do
-  divClass colCls6 . elAttr "label" ("class" =: "field-label") $ text title
-  divClass colCls3 . elAttr "a" ("class" =: "buttoninfo w-inline-block" <>
-    "title" =: hint <> "style" =: "cursor:pointer;") .
-    elAttr "img" ("src" =: "images/InfoPict.svg" <> "loading" =: "lazy" <>
-      "width" =: "23" <> "class" =: "infopict") $ blank
-  where
-    colCls6 = "w-col w-col-6 w-col-medium-6 w-col-small-6 w-col-tiny-6"
-    colCls3 = "column-3 w-col w-col-6 w-col-medium-6 w-col-small-6 w-col-tiny-6"
+import           Crypto                   (Zp, FiniteField, toZp)
+
 
 toText :: Show a => a -> Text
 toText = pack . show
@@ -25,3 +22,33 @@ safeIndex zs n = guard (n >= 0) >> go zs n
     go  (x:_) 0 = Just x
     go  (_:xs) i = go xs (pred i)
 
+eventMaybe :: Reflex t => b -> Event t (Maybe a) -> (Event t a, Event t b)
+eventMaybe errValue e = (catMaybes e, errValue <$ ffilter isNothing e)
+
+--------------------------------------------- ByteString ----------------------------------------------
+
+-- TODO: Some refactoring is needed. This code repeats our existing backend code!
+
+emptyByteString :: BS.ByteString
+emptyByteString = BS.empty
+
+indexByteString :: BS.ByteString -> Integer -> Integer
+indexByteString bs i = toInteger $ BS.index bs (fromInteger i)
+
+sliceByteString :: Integer -> Integer -> BS.ByteString -> BS.ByteString
+sliceByteString start n bs = BS.take (fromIntegral n) (BS.drop (fromIntegral start) bs)
+
+dropByteString :: Integer -> BS.ByteString -> BS.ByteString
+dropByteString n bs = sliceByteString n (toInteger (BS.length bs) - n) bs
+
+byteStringToList :: BS.ByteString -> [Integer]
+byteStringToList bs = indexByteString bs 0 : byteStringToList (dropByteString 1 bs)
+
+byteStringToInteger :: BS.ByteString -> Integer
+byteStringToInteger bs = foldr (\d n -> 256*n + d) 0 (byteStringToList bs)
+
+byteStringToZp :: FiniteField p => BS.ByteString -> Zp p
+byteStringToZp = toZp . byteStringToInteger
+
+tryDecode :: Text -> Either String BS.ByteString
+tryDecode = BS.decode . encodeUtf8

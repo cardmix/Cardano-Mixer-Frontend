@@ -15,8 +15,8 @@ data DepositParams = DepositParams
   {
     dpAddress      :: Text,
     dpADAValue     :: Text,
-    dpNonADAValue  :: [(Text, Text, Text)],
-    dpKey          :: Text
+    dpNonADAValue  :: [(Text, Text, Text)],  -- [(symbol, name, quantity)]
+    dpKey          :: (Text, Text)           -- (key, secret)
   }
   deriving (Generic, ToJSVal)
 

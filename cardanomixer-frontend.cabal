@@ -2,14 +2,9 @@ cabal-version:       2.4
 
 name:                cardanomixer-frontend
 version:             0.1.0.0
-license:             Apache-2.0
-license-files:       LICENSE
 build-type:          Simple
 
-author:              Catherine Galkina
-                     Vladimir Sinyakov
-maintainer:          catherine.galkina@gmail.com
-                     devteam@cardmix.io
+maintainer:          devteam@cardmix.io
 
 executable cardanomixer
   main-is:             Main.hs
@@ -26,15 +21,19 @@ executable cardanomixer
                     , App.Deposit
                     , App.Withdraw
                     , Backend
+                    , Backend.Types
                     , Client
                     , JS
                     , JS.App
                     , JS.Types
                     , JS.WebPage
+                    , Language
                     , Reflex.ScriptDependent
+                    , WebPage.Basic
 
   build-depends:      base >=4.7
                     , aeson
+                    , base16-bytestring
                     , bytestring
                     , cardano-mixer-common
                     , containers

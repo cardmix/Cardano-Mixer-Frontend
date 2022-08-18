@@ -5,7 +5,7 @@ flags: +frontend
 source-repository-package
   type: git
   location: https://github.com/cardmix/Cardano-Mixer-Lib.git
-  tag: a15c0d459ae0eef971bfadb670503915c9394b6a
+  tag: 08f966c99ba11f90d6958eca1c86355b517059cd
 
 source-repository-package
   type: git

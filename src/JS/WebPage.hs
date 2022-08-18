@@ -12,9 +12,8 @@ import           Data.Text                   (Text)
 import           Language.Javascript.JSaddle (ToJSVal(..), JSVal)
 #endif
 
------------------------------------------------------------------
 
--- WebFlow header script
+-- the script that is executed on page load
 #ifdef __GHCJS__
 foreign import javascript unsafe
   "runHeadScripts();" runHeadScripts_js :: IO ()
@@ -24,6 +23,38 @@ runHeadScripts = liftIO runHeadScripts_js
 #else
 runHeadScripts :: MonadIO m => m ()
 runHeadScripts = error "GHCJS is required!"
+#endif
+
+-----------------------------------------------------------------
+
+#ifdef __GHCJS__
+foreign import javascript unsafe
+  "setElementText($1, $2);" setElementText_js :: JSVal -> JSVal -> IO ()
+
+setElementText :: MonadIO m => Text -> Text -> m ()
+setElementText elId txt = liftIO $ do
+  elId_js <- toJSVal elId
+  txt_js  <- toJSVal txt
+  setElementText_js elId_js txt_js
+#else
+setElementText :: MonadIO m => Text -> Text -> m ()
+setElementText = error "GHCJS is required!"
+#endif
+
+-----------------------------------------------------------------
+
+#ifdef __GHCJS__
+foreign import javascript unsafe
+  "setInputValue($1, $2);" setInputValue_js :: JSVal -> JSVal -> IO ()
+
+setInputValue :: MonadIO m => Text -> Text -> m ()
+setInputValue elId txt = liftIO $ do
+  elId_js <- toJSVal elId
+  txt_js  <- toJSVal txt
+  setInputValue_js elId_js txt_js
+#else
+setInputValue :: MonadIO m => Text -> Text -> m ()
+setInputValue = error "GHCJS is required!"
 #endif
 
 -----------------------------------------------------------------

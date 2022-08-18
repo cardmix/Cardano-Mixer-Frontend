@@ -32,12 +32,11 @@ headWidget = do
   eWebFontLoaded <- domEvent Load . fst <$> elAttr' "script"
     ("src" =: "https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"
       <> "type" =: "text/javascript") blank
-  eStaticLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "js/static.js" <> "type" =: "text/javascript") blank
-  eLoaderLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "nami-wallet/src/api/loader.js" <> "type" =: "text/javascript") blank
-  elAttr "script" ("src" =: "js/snarkjs.min.js" <> "type" =: "text/javascript") blank
+  eCardmixLoaded <- domEvent Load . fst <$> elAttr' "script" ("src" =: "js/cardmix.js" <> "type" =: "text/javascript") blank
+  eLoaderLoaded  <- domEvent Load . fst <$> elAttr' "script" ("src" =: "js/Loader.js" <> "type" =: "text/javascript") blank
 
   dWebFontLoaded  <- holdDyn False (True <$ eWebFontLoaded)
-  dStaticLoaded   <- holdDyn False (True <$ eStaticLoaded)
+  dStaticLoaded   <- holdDyn False (True <$ eCardmixLoaded)
   dLoaderLoaded   <- holdDyn False (True <$ eLoaderLoaded)
   let eScriptsLoaded = ffilter (== True) $ updated $ foldl (zipDynWith (&&)) (pure True) [dWebFontLoaded, dStaticLoaded, dLoaderLoaded]
   performEvent_ (JS.runHeadScripts <$ eScriptsLoaded)
