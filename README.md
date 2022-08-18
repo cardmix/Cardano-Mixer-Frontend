@@ -2,6 +2,8 @@
 
 ## Building Reflex frontend
 
+This project is built with cabal 3.2.0.0 and GHCJS 8.6.5.
+
 In the shell, run
 ```
 cabal new-build --ghcjs
